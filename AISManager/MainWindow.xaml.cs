@@ -10,7 +10,7 @@ namespace AISManager
             InitializeComponent();
             DataContext = new MainViewModel();
         }
-
+        // 
         private void MenuButton_Click(object sender, RoutedEventArgs e)
         {
             ViewFixes.Visibility = Visibility.Collapsed;
