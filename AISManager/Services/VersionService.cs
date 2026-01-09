@@ -24,7 +24,7 @@ namespace AISManager.Services
             try
             {
                 var response = await _httpClient.GetStringAsync(AISVersionCheckURL);
-                var doc = new HtmlDocument();
+                var doc = new HtmlAgilityPack.HtmlDocument();
                 doc.LoadHtml(response);
 
                 var versionListNodes = doc.DocumentNode.SelectNodes("//footer[@class='footer']//div[@class='footer__text-container']/ul[@class='footer__text-ul'][1]/li[@class='footer__text']");

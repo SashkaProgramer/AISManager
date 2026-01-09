@@ -1,0 +1,10 @@
+{
+  "DownloadPath": "D:\\",
+  "SfxOutputPath": "",
+  "RarOutputPath": "",
+  "WinRarPath": "C:\\Program Files\\WinRAR\\WinRAR.exe",
+  "AutoSfx": true,
+  "AutoDownload": false,
+  "IsAutoCheckEnabled": true,
+  "AutoCheckIntervalMinutes": 10
+}

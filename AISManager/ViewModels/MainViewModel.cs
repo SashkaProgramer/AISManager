@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using AISManager.Infrastructure;
+using AISManager.AppData.Configs;
 using AISManager.Models;
 using AISManager.Services;
 using Serilog;
@@ -13,16 +14,14 @@ namespace AISManager.ViewModels
     {
         private readonly IHotfixService _hotfixService;
         private readonly IVersionService _versionService;
+        private readonly ArchiveProcessorService _archiveProcessorService;
         private readonly ILogger _logger;
+        private readonly AppConfig _config;
 
         private string _currentVersion = "Загрузка...";
         private string _logOutput = "";
         private bool _isBusy;
-        private bool _autoSfx = true;
-        private bool _isAutoCheckEnabled;
         private System.Threading.Timer? _autoCheckTimer;
-        private string _winRarPath = @"C:\Program Files\WinRAR\WinRAR.exe";
-        private string _downloadPath = @"C:\AIS_Updates\Output";
 
         public ObservableCollection<UpdateFile> Updates { get; } = new();
 
@@ -44,74 +43,138 @@ namespace AISManager.ViewModels
             set => SetProperty(ref _isBusy, value);
         }
 
-        public bool AutoSfx
+        public bool IsFullAuto
         {
-            get => _autoSfx;
-            set => SetProperty(ref _autoSfx, value);
-        }
-
-        public bool IsAutoCheckEnabled
-        {
-            get => _isAutoCheckEnabled;
+            get => _config.IsAutoCheckEnabled && _config.AutoSfx;
             set
             {
-                if (SetProperty(ref _isAutoCheckEnabled, value))
+                _config.IsAutoCheckEnabled = value;
+                _config.AutoSfx = value;
+                _config.Save();
+                
+                if (value) StartAutoCheck();
+                else StopAutoCheck();
+                
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AutoCheckStatusText));
+                OnPropertyChanged(nameof(AutoCheckStatusColor));
+            }
+        }
+
+        public bool AutoDownload
+        {
+            get => _config.AutoDownload;
+            set
+            {
+                if (_config.AutoDownload != value)
                 {
-                    if (value) StartAutoCheck();
-                    else StopAutoCheck();
-                    
-                    OnPropertyChanged(nameof(AutoCheckStatusText));
-                    OnPropertyChanged(nameof(AutoCheckStatusColor));
+                    _config.AutoDownload = value;
+                    _config.Save();
+                    OnPropertyChanged();
                 }
             }
         }
 
-        public string AutoCheckStatusText => IsAutoCheckEnabled ? "Автопроверка активна" : "Автопроверка выключена";
-        public string AutoCheckStatusColor => IsAutoCheckEnabled ? "#48BB78" : "#718096";
+        public string AutoCheckStatusText => IsFullAuto ? "Автопроверка активна" : "Автопроверка выключена";
+        public string AutoCheckStatusColor => IsFullAuto ? "#48BB78" : "#718096";
 
-        public string WinRarPath
-        {
-            get => _winRarPath;
-            set => SetProperty(ref _winRarPath, value);
-        }
 
         public string DownloadPath
         {
-            get => _downloadPath;
-            set => SetProperty(ref _downloadPath, value);
+            get => _config.DownloadPath;
+            set
+            {
+                if (_config.DownloadPath != value)
+                {
+                    _config.DownloadPath = value;
+                    _config.Save();
+                    OnPropertyChanged();
+                }
+            }
         }
+
+        public string SfxOutputPath
+        {
+            get => _config.SfxOutputPath;
+            set
+            {
+                if (_config.SfxOutputPath != value)
+                {
+                    _config.SfxOutputPath = value;
+                    _config.Save();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
 
         public ICommand CheckUpdatesCommand { get; }
         public ICommand DownloadCommand { get; }
         public ICommand ManualDownloadCommand { get; }
+        public ICommand SelectDownloadPathCommand { get; }
+        public ICommand SelectSfxOutputPathCommand { get; }
 
         public MainViewModel()
         {
-            // In a real app, use DI. Here we manually compose for simplicity.
+            _config = AppConfig.Instance;
+            _config.Load();
             _hotfixService = new HotfixService();
             _versionService = new VersionService();
+            _archiveProcessorService = new ArchiveProcessorService();
+            _archiveProcessorService.OnLog = msg => System.Windows.Application.Current.Dispatcher.Invoke(() => AddLog(msg));
             
             _logger = Log.ForContext<MainViewModel>();
 
             CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync());
             DownloadCommand = new RelayCommand(async _ => await DownloadSelectedAsync(), _ => !IsBusy);
-            ManualDownloadCommand = new RelayCommand(_ => MessageBox.Show("Функция ручного скачивания пока не реализована."));
+            ManualDownloadCommand = new RelayCommand(_ => System.Windows.MessageBox.Show("Функция ручного скачивания пока не реализована."));
+
+            SelectDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для загрузки архивов", path => DownloadPath = path));
+            SelectSfxOutputPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для FIX_№.exe", path => SfxOutputPath = path));
+
+            if (IsFullAuto) StartAutoCheck();
 
             // Initial check
             Task.Run(CheckUpdatesAsync);
         }
 
+        private void BrowseFolder(string description, Action<string> onSelected)
+        {
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = description,
+                UseDescriptionForTitle = true
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                onSelected(dialog.SelectedPath);
+            }
+        }
+
+        private void BrowseFile(string filter, Action<string> onSelected)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = filter
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                onSelected(dialog.FileName);
+            }
+        }
+
         private void StartAutoCheck()
         {
-            AddLog("Автопроверка обновлений включена (интервал 10 мин).");
-            // 10 minutes interval
+            AddLog($"Автопроверка обновлений включена (интервал {_config.AutoCheckIntervalMinutes} мин).");
             _autoCheckTimer = new System.Threading.Timer(async _ => 
             {
                 if (!IsBusy) 
                 {
-                    await Application.Current.Dispatcher.InvokeAsync(async () => await CheckUpdatesAsync());
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await CheckUpdatesAsync());
                 }
-            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+            }, null, TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes), TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes));
         }
 
         private void StopAutoCheck()
@@ -125,43 +188,41 @@ namespace AISManager.ViewModels
         {
             if (IsBusy) return;
             IsBusy = true;
-            // AddLog("Проверка версии АИС..."); // Commented out to reduce spam in auto-check
 
             try
             {
                 CurrentVersion = await _versionService.GetCurrentAISVersionAsync();
-                // AddLog($"Текущая версия: {CurrentVersion}");
-
-                // AddLog("Поиск обновлений...");
                 var hotfixes = await _hotfixService.GetHotfixesAsync(CurrentVersion);
 
-                Application.Current.Dispatcher.Invoke(() =>
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
                 {
-                    // Merge logic: don't clear if same, but for simplicity we clear and re-add or just update
-                    // For now, let's just clear to be safe, but in a real auto-check we might want to preserve selection
-                    // Simple approach:
                     var existingFiles = Updates.Select(u => u.FileName).ToHashSet();
-                    
+                    bool hasNew = false;
+
                     foreach (var hf in hotfixes)
                     {
                         if (!existingFiles.Contains(hf.Name))
                         {
-                            Updates.Add(new UpdateFile
+                            var newFile = new UpdateFile
                             {
                                 HotfixData = hf,
                                 StatusText = "НОВОЕ",
                                 StatusBgColor = "#BEE3F8",
-                                StatusFgColor = "#2B6CB0"
-                            });
+                                StatusFgColor = "#2B6CB0",
+                                IsSelected = AutoDownload // Авто-выбор если включена автозагрузка
+                            };
+                            Updates.Add(newFile);
                             AddLog($"Найдено новое обновление: {hf.Name}");
+                            hasNew = true;
                         }
                     }
-                });
 
-                if (hotfixes.Count == 0)
-                {
-                    // AddLog("Обновлений не найдено.");
-                }
+                    if (hasNew && AutoDownload && !IsBusy)
+                    {
+                        AddLog("Запуск автоматической загрузки новых фиксов...");
+                        await DownloadSelectedAsync();
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -226,12 +287,15 @@ namespace AISManager.ViewModels
                     file.StatusFgColor = "White";
                     file.IsProcessing = false;
                     AddLog($"Скачано: {file.FileName}");
-
-                    if (AutoSfx && !string.IsNullOrEmpty(file.HotfixData?.LocalPath))
-                    {
-                        await Task.Run(() => CreateSfx(file.HotfixData.LocalPath));
-                    }
                 }
+
+                if (_config.AutoSfx)
+                {
+                    AddLog("Запуск автоматической обработки архивов...");
+                    await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config);
+                    AddLog("Автоматическая обработка завершена.");
+                }
+
                 AddLog("Все загрузки завершены.");
             }
             catch (Exception ex)
@@ -242,54 +306,6 @@ namespace AISManager.ViewModels
             finally
             {
                 IsBusy = false;
-            }
-        }
-
-        private void CreateSfx(string sourceFile)
-        {
-            if (!File.Exists(WinRarPath))
-            {
-                AddLog($"Ошибка: WinRAR не найден по пути {WinRarPath}");
-                return;
-            }
-
-            try
-            {
-                var fileInfo = new FileInfo(sourceFile);
-                var sfxName = Path.ChangeExtension(fileInfo.Name, ".exe");
-                var sfxPath = Path.Combine(fileInfo.DirectoryName!, sfxName);
-
-                AddLog($"Создание SFX архива: {sfxName}...");
-
-                // WinRAR command: a -sfx -ep1 "Output.exe" "InputFile"
-                var args = $"a -sfx -ep1 \"{sfxPath}\" \"{sourceFile}\"";
-                
-                var psi = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = WinRarPath,
-                    Arguments = args,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                };
-
-                using var process = System.Diagnostics.Process.Start(psi);
-                process?.WaitForExit();
-
-                if (process?.ExitCode == 0)
-                {
-                    AddLog($"SFX архив создан успешно: {sfxName}");
-                }
-                else
-                {
-                    var error = process?.StandardError.ReadToEnd();
-                    AddLog($"Ошибка создания SFX. Код: {process?.ExitCode}. {error}");
-                }
-            }
-            catch (Exception ex)
-            {
-                AddLog($"Ошибка при создании SFX: {ex.Message}");
             }
         }
 
