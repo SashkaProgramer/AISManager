@@ -114,7 +114,7 @@
                     <!-- СЛЕВА: ВЕРСИЯ -->
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
                         <TextBlock Text="Текущая версия АИС Налог 3 Пром:" Foreground="#718096" FontSize="12"/>
-                        <TextBlock Text="v. 2.1.58 (Build 402)" Foreground="#2D3748" FontWeight="Bold" FontSize="18" Margin="0,2,0,0"/>
+                        <TextBlock Text="ver. 21.5.1.1" Foreground="#2D3748" FontWeight="Bold" FontSize="18" Margin="0,2,0,0"/>
                     </StackPanel>
 
                     <!-- СПРАВА: СТАТУС И ОБНОВИТЬ -->
