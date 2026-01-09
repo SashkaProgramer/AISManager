@@ -7,6 +7,8 @@ using AISManager.AppData.Configs;
 using AISManager.Models;
 using AISManager.Services;
 using Serilog;
+using AISManager.AppData;
+using System.Diagnostics;
 
 namespace AISManager.ViewModels
 {
@@ -113,6 +115,7 @@ namespace AISManager.ViewModels
         public ICommand ManualDownloadCommand { get; }
         public ICommand SelectDownloadPathCommand { get; }
         public ICommand SelectSfxOutputPathCommand { get; }
+        public ICommand OpenAppDataCommand { get; }
 
         public MainViewModel()
         {
@@ -131,11 +134,31 @@ namespace AISManager.ViewModels
 
             SelectDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для загрузки архивов", path => DownloadPath = path));
             SelectSfxOutputPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для FIX_№.exe", path => SfxOutputPath = path));
+            OpenAppDataCommand = new RelayCommand(_ => OpenAppDataFolder());
 
             if (IsFullAuto) StartAutoCheck();
 
             // Initial check
             Task.Run(CheckUpdatesAsync);
+        }
+
+        private void OpenAppDataFolder()
+        {
+            try
+            {
+                var path = AppPath.DataPath;
+                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка при открытии папки: {ex.Message}");
+            }
         }
 
         private void BrowseFolder(string description, Action<string> onSelected)
