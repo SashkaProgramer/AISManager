@@ -404,6 +404,33 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
+                            <Button Content="🗑️ Очистить файлы логов"
+                                    HorizontalAlignment="Left"
+                                    Padding="15,8"
+                                    Margin="0,10,0,0"
+                                    Background="White"
+                                    BorderBrush="#CBD5E0"
+                                    BorderThickness="1"
+                                    Cursor="Hand"
+                                    Command="{Binding ClearLogsCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Foreground"
+                                                Value="#4A5568" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver"
+                                                     Value="True">
+                                                <Setter Property="Background"
+                                                        Value="#FFF5F5" />
+                                                <Setter Property="Foreground"
+                                                        Value="#C53030" />
+                                                <Setter Property="BorderBrush"
+                                                        Value="#FEB2B2" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
@@ -422,18 +449,43 @@
                     BorderBrush="#E2E8F0"
                     BorderThickness="0,1,0,0"
                     Visibility="{Binding LogVisibility}">
-                <ScrollViewer x:Name="LogScroll">
-                    <TextBox Text="{Binding LogOutput, Mode=OneWay}"
-                             TextChanged="TextBox_TextChanged"
-                             IsReadOnly="True"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             FontFamily="Consolas"
-                             FontSize="12"
-                             Padding="10"
-                             SpellCheck.IsEnabled="False"
-                             TextWrapping="Wrap" />
-                </ScrollViewer>
+                <Grid>
+                    <ScrollViewer x:Name="LogScroll">
+                        <TextBox Text="{Binding LogOutput, Mode=OneWay}"
+                                 TextChanged="TextBox_TextChanged"
+                                 IsReadOnly="True"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 FontFamily="Consolas"
+                                 FontSize="12"
+                                 Padding="10"
+                                 SpellCheck.IsEnabled="False"
+                                 TextWrapping="Wrap" />
+                    </ScrollViewer>
+                    <Button Command="{Binding ClearLogsCommand}"
+                            Content="Очистить логи"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,5,25,0"
+                            Padding="8,2"
+                            FontSize="10"
+                            Background="White"
+                            BorderBrush="#CBD5E0"
+                            BorderThickness="1"
+                            Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Foreground" Value="#718096" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F7FAFC" />
+                                        <Setter Property="Foreground" Value="#2D3748" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

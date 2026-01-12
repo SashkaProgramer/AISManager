@@ -161,6 +161,7 @@ namespace AISManager.ViewModels
         public ICommand SelectSfxOutputPathCommand { get; }
         public ICommand OpenAppDataCommand { get; }
         public ICommand ToggleLogCommand { get; }
+        public ICommand ClearLogsCommand { get; }
 
         public MainViewModel()
         {
@@ -181,6 +182,7 @@ namespace AISManager.ViewModels
             SelectSfxOutputPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для FIX_№.exe", path => SfxOutputPath = path));
             OpenAppDataCommand = new RelayCommand(_ => OpenAppDataFolder());
             ToggleLogCommand = new RelayCommand(_ => IsLogVisible = !IsLogVisible);
+            ClearLogsCommand = new RelayCommand(_ => ClearLogs());
 
             Updates.CollectionChanged += (s, e) =>
             {
@@ -392,6 +394,38 @@ namespace AISManager.ViewModels
         {
             var msg = $"[{DateTime.Now:HH:mm:ss}] {message}";
             LogOutput += msg + "\n";
+        }
+
+        private void ClearLogs()
+        {
+            LogOutput = "";
+            try
+            {
+                var directory = new DirectoryInfo(AppPath.LogsPath);
+                if (directory.Exists)
+                {
+                    foreach (var file in directory.GetFiles())
+                    {
+                        try
+                        {
+                            file.Delete();
+                        }
+                        catch
+                        {
+                            // Skip files that are in use (like the current log file)
+                        }
+                    }
+                    AddLog("Логи на диске очищены (кроме используемых файлов).");
+                }
+                else
+                {
+                    AddLog("Папка с логами не найдена.");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка при очистке логов: {ex.Message}");
+            }
         }
     }
 }
