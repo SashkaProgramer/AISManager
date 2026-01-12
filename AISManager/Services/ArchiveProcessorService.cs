@@ -50,7 +50,7 @@ namespace AISManager.Services
                 var files = Directory.GetFiles(sourcePath);
                 var archivesToProcess = new List<ArchiveInfo>();
 
-                LogInfo("Анализ файлов в папке: {0}", sourcePath);
+                LogInfo("Обработка архивов...");
 
                 foreach (var filePath in files)
                 {
@@ -106,19 +106,17 @@ namespace AISManager.Services
                         {
                             if (!File.Exists(cleanFilePath))
                             {
-                                LogInfo("Переименование: {0} -> {1}", Path.GetFileName(currentFilePath), cleanFileName);
                                 File.Move(currentFilePath, cleanFilePath);
                             }
                             currentFilePath = cleanFilePath;
                         }
 
-                        LogInfo("Распаковка [{0}]: {1} -> Staging...", archive.FixNumber, Path.GetFileName(currentFilePath));
                         if (archive.Extension == ".zip") UnzipFile(currentFilePath, stagingPath);
                         else if (archive.Extension == ".rar") UnrarFile(currentFilePath, stagingPath);
                     }
 
                     var lastFixNumber = sortedList.Last().FixNumber;
-                    
+
                     // SFX Creation
                     var sfxOutputFolder = string.IsNullOrWhiteSpace(config.SfxOutputPath) ? sourcePath : config.SfxOutputPath;
                     Directory.CreateDirectory(sfxOutputFolder);

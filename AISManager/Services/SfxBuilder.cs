@@ -39,7 +39,7 @@ namespace AISManager.Services
         {
             try
             {
-                LogInfo("Подготовка к сборке SFX архива...");
+                // PrepareTools(); // Already call it below
                 PrepareTools();
 
                 var tempArchive7z = Path.Combine(_toolsDir, "payload.7z");
@@ -47,7 +47,7 @@ namespace AISManager.Services
                 // Copy run.cmd to source dir before packing
                 var runCmdDest = Path.Combine(contentSourceDir, RunScript);
                 var runCmdSource = Path.Combine(_toolsDir, RunScript);
-                
+
                 if (File.Exists(runCmdSource))
                 {
                     File.Copy(runCmdSource, runCmdDest, true);
@@ -60,7 +60,7 @@ namespace AISManager.Services
                 s_logger.Information("Упаковка файлов в 7z...");
                 Run7z($"a \"{tempArchive7z}\" \"{contentSourceDir}\\*\"");
 
-                LogInfo("Создание исполняемого файла {0}...", Path.GetFileName(outputExePath));
+                // CreateSfxExe(outputExePath, tempArchive7z);
                 CreateSfxExe(outputExePath, tempArchive7z);
 
                 LogInfo("SFX архив успешно создан: {0}", outputExePath);
@@ -100,7 +100,7 @@ namespace AISManager.Services
             if (fullResourceName == null)
             {
                 LogWarning("Встроенный ресурс не найден: {0}. Пытаемся найти в папке Resources.", resourceName);
-                
+
                 // Fallback to local file if resource not found (for development)
                 var localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "SfxTools", resourceName);
                 if (File.Exists(localPath))
@@ -108,7 +108,7 @@ namespace AISManager.Services
                     File.Copy(localPath, Path.Combine(_toolsDir, fileName), true);
                     return;
                 }
-                
+
                 throw new FileNotFoundException($"Встроенный ресурс не найден: {resourceName}");
             }
 

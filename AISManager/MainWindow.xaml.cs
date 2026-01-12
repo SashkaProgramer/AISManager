@@ -16,6 +16,7 @@ namespace AISManager
             // Скрываем все области контента
             ViewFixes.Visibility = Visibility.Collapsed;
             ViewSettings.Visibility = Visibility.Collapsed;
+            ViewDistros.Visibility = Visibility.Collapsed;
 
             // Сбрасываем стили всех кнопок меню до обычного состояния
             BtnFixes.Style = (Style)FindResource("MenuButtonStyle");
@@ -35,14 +36,8 @@ namespace AISManager
             }
             else if (sender == BtnDistros)
             {
+                ViewDistros.Visibility = Visibility.Visible;
                 BtnDistros.Style = (Style)FindResource("ActiveMenuButtonStyle");
-                // Можно добавить сообщение, что раздел в разработке
-                System.Windows.MessageBox.Show("Раздел 'Дистрибутивы ПО' находится в разработке.", "Информация");
-
-                // Возвращаемся на вкладку фиксов для наглядности
-                ViewFixes.Visibility = Visibility.Visible;
-                BtnFixes.Style = (Style)FindResource("ActiveMenuButtonStyle");
-                BtnDistros.Style = (Style)FindResource("MenuButtonStyle");
             }
         }
 

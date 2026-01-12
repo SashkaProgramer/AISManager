@@ -23,6 +23,7 @@ namespace AISManager.AppData.Configs
         }
 
         public string DownloadPath { get; set; } = "";
+        public string DistroDownloadPath { get; set; } = "";
         public string SfxOutputPath { get; set; } = ""; // Empty means same as DownloadPath
         public bool AutoSfx { get; set; } = true;
         public bool AutoDownload { get; set; } = false;

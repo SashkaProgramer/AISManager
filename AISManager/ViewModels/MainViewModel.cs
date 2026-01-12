@@ -16,6 +16,7 @@ namespace AISManager.ViewModels
     {
         private readonly IHotfixService _hotfixService;
         private readonly IVersionService _versionService;
+        private readonly IDistroService _distroService;
         private readonly ArchiveProcessorService _archiveProcessorService;
         private readonly ILogger _logger;
         private readonly AppConfig _config;
@@ -24,6 +25,17 @@ namespace AISManager.ViewModels
         private string _logOutput = "";
         private bool _isBusy;
         private System.Threading.Timer? _autoCheckTimer;
+
+        private DistroInfo? _latestDistro;
+        public DistroInfo? LatestDistro
+        {
+            get => _latestDistro;
+            set
+            {
+                if (SetProperty(ref _latestDistro, value))
+                    CommandManager.InvalidateRequerySuggested();
+            }
+        }
 
         public ObservableCollection<UpdateFile> Updates { get; } = new();
 
@@ -42,7 +54,11 @@ namespace AISManager.ViewModels
         public bool IsBusy
         {
             get => _isBusy;
-            set => SetProperty(ref _isBusy, value);
+            set
+            {
+                if (SetProperty(ref _isBusy, value))
+                    CommandManager.InvalidateRequerySuggested();
+            }
         }
 
         public bool IsFullAuto
@@ -111,6 +127,20 @@ namespace AISManager.ViewModels
             }
         }
 
+        public string DistroDownloadPath
+        {
+            get => _config.DistroDownloadPath;
+            set
+            {
+                if (_config.DistroDownloadPath != value)
+                {
+                    _config.DistroDownloadPath = value;
+                    _config.Save();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
 
         public bool IsAllSelected
         {
@@ -163,12 +193,18 @@ namespace AISManager.ViewModels
         public ICommand ToggleLogCommand { get; }
         public ICommand ClearLogsCommand { get; }
 
+        public ICommand CheckDistrosCommand { get; }
+        public ICommand DownloadDistroCommand { get; }
+        public ICommand SelectDistroDownloadPathCommand { get; }
+
         public MainViewModel()
         {
             _config = AppConfig.Instance;
             _config.Load();
             _hotfixService = new HotfixService();
             _versionService = new VersionService();
+            _distroService = new DistroService();
+            _distroService.OnLog = msg => System.Windows.Application.Current.Dispatcher.Invoke(() => AddLog(msg));
             _archiveProcessorService = new ArchiveProcessorService();
             _archiveProcessorService.OnLog = msg => System.Windows.Application.Current.Dispatcher.Invoke(() => AddLog(msg));
 
@@ -183,6 +219,10 @@ namespace AISManager.ViewModels
             OpenAppDataCommand = new RelayCommand(_ => OpenAppDataFolder());
             ToggleLogCommand = new RelayCommand(_ => IsLogVisible = !IsLogVisible);
             ClearLogsCommand = new RelayCommand(_ => ClearLogs());
+
+            CheckDistrosCommand = new RelayCommand(async _ => await CheckDistrosAsync());
+            DownloadDistroCommand = new RelayCommand(async _ => await DownloadLatestDistroAsync(), _ => !IsBusy && LatestDistro != null);
+            SelectDistroDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для загрузки дистрибутивов", path => DistroDownloadPath = path));
 
             Updates.CollectionChanged += (s, e) =>
             {
@@ -278,8 +318,7 @@ namespace AISManager.ViewModels
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
                 {
                     var existingFiles = Updates.Select(u => u.FileName).ToHashSet();
-                    bool hasNew = false;
-
+                    int newCount = 0;
                     foreach (var hf in hotfixes)
                     {
                         if (!existingFiles.Contains(hf.Name))
@@ -293,15 +332,18 @@ namespace AISManager.ViewModels
                                 IsSelected = AutoDownload // Авто-выбор если включена автозагрузка
                             };
                             Updates.Add(newFile);
-                            AddLog($"Найдено новое обновление: {hf.Name}");
-                            hasNew = true;
+                            newCount++;
                         }
                     }
 
-                    if (hasNew && AutoDownload)
+                    if (newCount > 0)
                     {
-                        AddLog("Запуск автоматической загрузки новых фиксов...");
-                        await DownloadSelectedAsync();
+                        AddLog($"Найдено новых обновлений: {newCount}");
+
+                        if (AutoDownload)
+                        {
+                            await DownloadSelectedAsync();
+                        }
                     }
                 });
             }
@@ -344,6 +386,7 @@ namespace AISManager.ViewModels
 
             try
             {
+                AddLog($"Запуск загрузки ({selected.Count})...");
                 foreach (var file in selected)
                 {
                     if (file.HotfixData == null) continue;
@@ -352,8 +395,6 @@ namespace AISManager.ViewModels
                     file.StatusText = "ЗАГРУЗКА";
                     file.StatusBgColor = "#FEFCBF";
                     file.StatusFgColor = "#D69E2E";
-
-                    AddLog($"Скачивание {file.FileName}...");
 
                     var progress = new Progress<int>(p =>
                     {
@@ -367,17 +408,14 @@ namespace AISManager.ViewModels
                     file.StatusBgColor = "#48BB78";
                     file.StatusFgColor = "White";
                     file.IsProcessing = false;
-                    AddLog($"Скачано: {file.FileName}");
                 }
 
                 if (_config.AutoSfx)
                 {
-                    AddLog("Запуск автоматической обработки архивов...");
                     await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config);
-                    AddLog("Автоматическая обработка завершена.");
                 }
 
-                AddLog("Все загрузки завершены.");
+                AddLog("Готово.");
             }
             catch (Exception ex)
             {
@@ -386,6 +424,78 @@ namespace AISManager.ViewModels
             }
             finally
             {
+                IsBusy = false;
+            }
+        }
+
+        private async Task CheckDistrosAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+
+            try
+            {
+                AddLog("Проверка обновлений дистрибутивов на FTP...");
+                LatestDistro = await _distroService.GetLatestDistroAsync();
+
+                if (LatestDistro != null)
+                {
+                    AddLog($"Найдена последняя версия дистрибутива: {LatestDistro.Version} ({LatestDistro.FileName})");
+                }
+                else
+                {
+                    AddLog("Не удалось найти дистрибутивы на FTP.");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка при проверке дистрибутивов: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task DownloadLatestDistroAsync()
+        {
+            if (LatestDistro == null || IsBusy) return;
+
+            string targetPath = DistroDownloadPath;
+            if (string.IsNullOrWhiteSpace(targetPath))
+            {
+                AddLog("Ошибка: Не указан путь для загрузки дистрибутивов в настройках.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                LatestDistro.IsDownloading = true;
+                LatestDistro.DownloadStatus = "ЗАГРУЗКА";
+                AddLog($"Начало загрузки дистрибутива {LatestDistro.FileName}...");
+
+                var progress = new Progress<int>(p =>
+                {
+                    if (LatestDistro != null)
+                        LatestDistro.Progress = p;
+                });
+
+                await _distroService.DownloadDistroAsync(LatestDistro, targetPath, progress);
+
+                LatestDistro.DownloadStatus = "ГОТОВО";
+                AddLog($"Дистрибутив успешно скачан в: {targetPath}");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка при скачивании дистрибутива: {ex.Message}");
+                if (LatestDistro != null)
+                    LatestDistro.DownloadStatus = "ОШИБКА";
+            }
+            finally
+            {
+                if (LatestDistro != null)
+                    LatestDistro.IsDownloading = false;
                 IsBusy = false;
             }
         }

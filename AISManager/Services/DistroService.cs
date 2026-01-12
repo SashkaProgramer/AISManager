@@ -1,0 +1,216 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using AISManager.Models;
+using Serilog;
+
+namespace AISManager.Services
+{
+    public interface IDistroService
+    {
+        Task<DistroInfo?> GetLatestDistroAsync();
+        Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null);
+        Action<string>? OnLog { get; set; }
+    }
+
+    public class DistroService : IDistroService
+    {
+        private const string FtpBaseUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/OE/";
+        private readonly ILogger _logger = Log.ForContext<DistroService>();
+
+        public Action<string>? OnLog { get; set; }
+        private void AddUiLog(string message) => OnLog?.Invoke(message);
+
+        public async Task<DistroInfo?> GetLatestDistroAsync()
+        {
+            try
+            {
+                AddUiLog("Подключение к FTP: " + FtpBaseUrl);
+                // 1. Get version folders
+                var versions = await ListFtpDirectoryAsync(FtpBaseUrl);
+                if (!versions.Any())
+                {
+                    AddUiLog("❌ Ошибка: FTP вернул пустой список папок (возможно, нет прав).");
+                    _logger.Warning("ListFtpDirectoryAsync returned empty list for {Url}", FtpBaseUrl);
+                    return null;
+                }
+
+                AddUiLog($"Найдено элементов на FTP: {versions.Count}");
+
+                // Регулярка для поиска версии: 4 числа через точку ИЛИ через подчеркивание
+                var versionRegex = new System.Text.RegularExpressions.Regex(@"(\d+[\._]\d+[\._]\d+[\._]\d+)");
+
+                // Ищем версию в каждой строке и берем саму строку как имя папки
+                var versionEntries = versions
+                    .Select(v => new { Raw = v, Match = versionRegex.Match(v) })
+                    .Where(x => x.Match.Success)
+                    .Select(x =>
+                    {
+                        var rawVersion = x.Match.Value;
+                        // Для сравнения приводим всё к точкам (25.9.30.1)
+                        var normalizedVersion = rawVersion.Replace('_', '.');
+                        return new { x.Raw, Version = normalizedVersion };
+                    })
+                    .OrderByDescending(x => x.Version, new VersionComparer())
+                    .ToList();
+
+                if (!versionEntries.Any())
+                {
+                    AddUiLog("❌ Ошибка: Не найдено папок с версиями (X.X.X.X или X_X_X_X).");
+                    AddUiLog("Первые элементы: " + string.Join(", ", versions.Take(3)));
+                    return null;
+                }
+
+                var latest = versionEntries.First();
+                string latestVersionFolder = latest.Raw;
+                string versionStr = latest.Version;
+
+                AddUiLog($"Выбрана версия: {versionStr} (папка: {latestVersionFolder})");
+
+                // 2. Go to EKP folder
+                string ekpPath = $"{FtpBaseUrl}{latestVersionFolder}/EKP/";
+                AddUiLog("Поиск .rar в: " + ekpPath);
+                var files = await ListFtpDirectoryAsync(ekpPath);
+
+                if (!files.Any())
+                {
+                    AddUiLog("❌ Ошибка: В папке EKP пусто.");
+                    return null;
+                }
+
+                // 3. Find .rar file (ищем файл, в котором есть расширение .rar)
+                var rarFile = files.FirstOrDefault(f => f.EndsWith(".rar", StringComparison.OrdinalIgnoreCase));
+
+                if (string.IsNullOrEmpty(rarFile))
+                {
+                    AddUiLog("❌ Ошибка: .rar файл не найден.");
+                    AddUiLog("Найдено файлов: " + string.Join(", ", files.Take(3)));
+                    return null;
+                }
+
+                AddUiLog($"✅ Готово к скачиванию: {rarFile}");
+
+                return new DistroInfo
+                {
+                    Version = versionStr,
+                    FileName = rarFile,
+                    FullUrl = $"{ekpPath}{rarFile}"
+                };
+            }
+            catch (Exception ex)
+            {
+                AddUiLog("❌ Критическая ошибка FTP: " + ex.Message);
+                _logger.Error(ex, "Error getting latest distro from FTP");
+                return null;
+            }
+        }
+
+        public async Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null)
+        {
+            try
+            {
+                if (!Directory.Exists(localPath)) Directory.CreateDirectory(localPath);
+                string fullFilePath = Path.Combine(localPath, distro.FileName);
+
+                _logger.Information("Starting download of {FileName} to {LocalPath}", distro.FileName, fullFilePath);
+
+#pragma warning disable SYSLIB0014
+                var request = (FtpWebRequest)WebRequest.Create(distro.FullUrl);
+#pragma warning restore SYSLIB0014
+                request.Method = WebRequestMethods.Ftp.DownloadFile;
+                request.UseBinary = true;
+                request.EnableSsl = false;
+
+                using var response = (FtpWebResponse)await request.GetResponseAsync();
+                long fileSize = response.ContentLength;
+
+                using var responseStream = response.GetResponseStream();
+                using var fileStream = new FileStream(fullFilePath, FileMode.Create);
+
+                byte[] buffer = new byte[81920]; // 80KB buffer
+                int bytesRead;
+                long totalBytesRead = 0;
+
+                while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                    totalBytesRead += bytesRead;
+
+                    if (fileSize > 0)
+                    {
+                        int p = (int)((totalBytesRead * 100) / fileSize);
+                        progress?.Report(p);
+                    }
+                }
+
+                _logger.Information("Download completed: {FileName}", distro.FileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error downloading distro from FTP");
+                throw;
+            }
+        }
+
+        private async Task<List<string>> ListFtpDirectoryAsync(string url)
+        {
+            var results = new List<string>();
+            try
+            {
+#pragma warning disable SYSLIB0014
+                var request = (FtpWebRequest)WebRequest.Create(url);
+#pragma warning restore SYSLIB0014
+                request.Method = WebRequestMethods.Ftp.ListDirectory;
+
+                using var response = (FtpWebResponse)await request.GetResponseAsync();
+                using var reader = new StreamReader(response.GetResponseStream());
+
+                string? line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    var entry = line.Trim();
+                    if (entry == "." || entry == "..") continue;
+
+                    // Если сервер возвращает полный путь, берем только имя
+                    var parts = entry.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length > 0)
+                    {
+                        var name = parts.Last();
+                        results.Add(name);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning("Could not list FTP directory {Url}: {Message}", url, ex.Message);
+                AddUiLog($"⚠️ Ошибка листинга {url}: {ex.Message}");
+            }
+            return results;
+        }
+
+        private class VersionComparer : IComparer<string>
+        {
+            public int Compare(string? x, string? y)
+            {
+                if (x == null || y == null) return 0;
+
+                var xParts = x.Split('.').Select(p => int.TryParse(p, out var v) ? v : 0).ToArray();
+                var yParts = y.Split('.').Select(p => int.TryParse(p, out var v) ? v : 0).ToArray();
+
+                int length = Math.Max(xParts.Length, yParts.Length);
+                for (int i = 0; i < length; i++)
+                {
+                    int xV = i < xParts.Length ? xParts[i] : 0;
+                    int yV = i < yParts.Length ? yParts[i] : 0;
+                    if (xV != yV) return xV.CompareTo(yV);
+                }
+                return 0;
+            }
+        }
+    }
+}
