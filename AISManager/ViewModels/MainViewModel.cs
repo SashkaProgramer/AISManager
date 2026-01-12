@@ -47,17 +47,19 @@ namespace AISManager.ViewModels
 
         public bool IsFullAuto
         {
-            get => _config.IsAutoCheckEnabled && _config.AutoSfx;
+            get => _config.IsAutoCheckEnabled && _config.AutoSfx && _config.AutoDownload;
             set
             {
                 _config.IsAutoCheckEnabled = value;
                 _config.AutoSfx = value;
+                _config.AutoDownload = value;
                 _config.Save();
-                
+
                 if (value) StartAutoCheck();
                 else StopAutoCheck();
-                
+
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(AutoDownload));
                 OnPropertyChanged(nameof(AutoCheckStatusText));
                 OnPropertyChanged(nameof(AutoCheckStatusColor));
             }
@@ -110,12 +112,55 @@ namespace AISManager.ViewModels
         }
 
 
+        public bool IsAllSelected
+        {
+            get => Updates.Any() && Updates.All(x => x.IsSelected);
+            set
+            {
+                foreach (var update in Updates)
+                {
+                    update.IsSelected = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isLogVisible = true;
+        public bool IsLogVisible
+        {
+            get => _isLogVisible;
+            set
+            {
+                if (SetProperty(ref _isLogVisible, value))
+                {
+                    OnPropertyChanged(nameof(LogVisibility));
+                }
+            }
+        }
+
+        public Visibility LogVisibility => IsLogVisible ? Visibility.Visible : Visibility.Collapsed;
+
+        public GridLength LogHeight
+        {
+            get => new GridLength(_config.LogHeight > 0 ? _config.LogHeight : 150, GridUnitType.Pixel);
+            set
+            {
+                if (_config.LogHeight != value.Value)
+                {
+                    _config.LogHeight = value.Value;
+                    _config.Save();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public ICommand CheckUpdatesCommand { get; }
         public ICommand DownloadCommand { get; }
         public ICommand ManualDownloadCommand { get; }
         public ICommand SelectDownloadPathCommand { get; }
         public ICommand SelectSfxOutputPathCommand { get; }
         public ICommand OpenAppDataCommand { get; }
+        public ICommand ToggleLogCommand { get; }
 
         public MainViewModel()
         {
@@ -125,7 +170,7 @@ namespace AISManager.ViewModels
             _versionService = new VersionService();
             _archiveProcessorService = new ArchiveProcessorService();
             _archiveProcessorService.OnLog = msg => System.Windows.Application.Current.Dispatcher.Invoke(() => AddLog(msg));
-            
+
             _logger = Log.ForContext<MainViewModel>();
 
             CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync());
@@ -135,6 +180,17 @@ namespace AISManager.ViewModels
             SelectDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для загрузки архивов", path => DownloadPath = path));
             SelectSfxOutputPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для FIX_№.exe", path => SfxOutputPath = path));
             OpenAppDataCommand = new RelayCommand(_ => OpenAppDataFolder());
+            ToggleLogCommand = new RelayCommand(_ => IsLogVisible = !IsLogVisible);
+
+            Updates.CollectionChanged += (s, e) =>
+            {
+                if (e.NewItems != null)
+                {
+                    foreach (UpdateFile item in e.NewItems)
+                        item.PropertyChanged += (s2, e2) => { if (e2.PropertyName == nameof(UpdateFile.IsSelected)) OnPropertyChanged(nameof(IsAllSelected)); };
+                }
+                OnPropertyChanged(nameof(IsAllSelected));
+            };
 
             if (IsFullAuto) StartAutoCheck();
 
@@ -191,9 +247,9 @@ namespace AISManager.ViewModels
         private void StartAutoCheck()
         {
             AddLog($"Автопроверка обновлений включена (интервал {_config.AutoCheckIntervalMinutes} мин).");
-            _autoCheckTimer = new System.Threading.Timer(async _ => 
+            _autoCheckTimer = new System.Threading.Timer(async _ =>
             {
-                if (!IsBusy) 
+                if (!IsBusy)
                 {
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await CheckUpdatesAsync());
                 }
@@ -240,7 +296,7 @@ namespace AISManager.ViewModels
                         }
                     }
 
-                    if (hasNew && AutoDownload && !IsBusy)
+                    if (hasNew && AutoDownload)
                     {
                         AddLog("Запуск автоматической загрузки новых фиксов...");
                         await DownloadSelectedAsync();
@@ -272,7 +328,7 @@ namespace AISManager.ViewModels
             string downloadPath = DownloadPath;
             if (!Directory.Exists(downloadPath))
             {
-                try 
+                try
                 {
                     Directory.CreateDirectory(downloadPath);
                 }

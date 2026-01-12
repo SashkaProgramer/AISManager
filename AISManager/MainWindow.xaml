@@ -149,8 +149,20 @@
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="80" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="100" />
+                <RowDefinition Height="*" MinHeight="100" />
+                <RowDefinition Height="Auto" /> <!-- Splitter -->
+                <RowDefinition Height="{Binding LogHeight, Mode=TwoWay}" MinHeight="0" MaxHeight="400">
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsLogVisible}" Value="False">
+                                    <Setter Property="Height" Value="0" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
             </Grid.RowDefinitions>
             <!-- ШАПКА -->
             <Border Grid.Row="0"
@@ -186,13 +198,27 @@
                                        Foreground="#A0AEC0"
                                        FontSize="10" />
                         </StackPanel>
-                        <Button Command="{Binding CheckUpdatesCommand}"
+                        <Button Command="{Binding ToggleLogCommand}"
                                 Width="32"
                                 Height="32"
                                 Margin="20,0,0,0"
                                 Background="White"
                                 BorderBrush="#E2E8F0"
                                 BorderThickness="1"
+                                ToolTip="Показать/скрыть логи"
+                                Cursor="Hand">
+                            <TextBlock Text="📋"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </Button>
+                        <Button Command="{Binding CheckUpdatesCommand}"
+                                Width="32"
+                                Height="32"
+                                Margin="10,0,0,0"
+                                Background="White"
+                                BorderBrush="#E2E8F0"
+                                BorderThickness="1"
+                                ToolTip="Проверить обновления"
                                 Cursor="Hand">
                             <TextBlock Text="↻"
                                        VerticalAlignment="Center"
@@ -211,11 +237,21 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0"
-                               Text="Список обновлений"
-                               FontSize="16"
-                               FontWeight="Bold"
-                               Margin="0,0,0,15" />
+                    <Grid Grid.Row="0" Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Список обновлений"
+                                   FontSize="16"
+                                   FontWeight="Bold" />
+                        <CheckBox Grid.Column="1" 
+                                  Content="Выбрать все" 
+                                  IsChecked="{Binding IsAllSelected}"
+                                  VerticalAlignment="Center"
+                                  FontWeight="SemiBold"
+                                  Foreground="#4A5568"/>
+                    </Grid>
                     <ListView Grid.Row="1"
                               ItemsSource="{Binding Updates}"
                               BorderThickness="0"
@@ -372,13 +408,23 @@
                     </ScrollViewer>
                 </Grid>
             </Grid>
+            <!-- SPLITTER -->
+            <GridSplitter Grid.Row="2"
+                          Height="4"
+                          HorizontalAlignment="Stretch"
+                          Background="#CBD5E0"
+                          Visibility="{Binding LogVisibility}"
+                          ShowsPreview="True" />
+
             <!-- ЛОГ ПАНЕЛЬ -->
-            <Border Grid.Row="2"
+            <Border Grid.Row="3"
                     Background="#EDF2F7"
                     BorderBrush="#E2E8F0"
-                    BorderThickness="0,1,0,0">
+                    BorderThickness="0,1,0,0"
+                    Visibility="{Binding LogVisibility}">
                 <ScrollViewer x:Name="LogScroll">
                     <TextBox Text="{Binding LogOutput, Mode=OneWay}"
+                             TextChanged="TextBox_TextChanged"
                              IsReadOnly="True"
                              Background="Transparent"
                              BorderThickness="0"

@@ -10,7 +10,7 @@ namespace AISManager
             InitializeComponent();
             DataContext = new MainViewModel();
         }
-
+        // 
         private void MenuButton_Click(object sender, RoutedEventArgs e)
         {
             // Скрываем все области контента
@@ -38,11 +38,19 @@ namespace AISManager
                 BtnDistros.Style = (Style)FindResource("ActiveMenuButtonStyle");
                 // Можно добавить сообщение, что раздел в разработке
                 System.Windows.MessageBox.Show("Раздел 'Дистрибутивы ПО' находится в разработке.", "Информация");
-                
+
                 // Возвращаемся на вкладку фиксов для наглядности
                 ViewFixes.Visibility = Visibility.Visible;
                 BtnFixes.Style = (Style)FindResource("ActiveMenuButtonStyle");
                 BtnDistros.Style = (Style)FindResource("MenuButtonStyle");
+            }
+        }
+
+        private void TextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.TextBox textBox)
+            {
+                textBox.ScrollToEnd();
             }
         }
     }

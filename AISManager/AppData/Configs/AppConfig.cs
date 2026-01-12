@@ -28,5 +28,6 @@ namespace AISManager.AppData.Configs
         public bool AutoDownload { get; set; } = false;
         public bool IsAutoCheckEnabled { get; set; } = false;
         public int AutoCheckIntervalMinutes { get; set; } = 10;
+        public double LogHeight { get; set; } = 150;
     }
 }
