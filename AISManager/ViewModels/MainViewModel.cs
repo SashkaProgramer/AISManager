@@ -564,19 +564,42 @@ namespace AISManager.ViewModels
 
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    var existingFiles = Updates.Select(u => u.FileName).ToHashSet();
+                    string hfPath = DownloadPath;
                     foreach (var hf in hotfixes)
                     {
-                        if (!existingFiles.Contains(hf.Name))
+                        var existing = Updates.FirstOrDefault(u => u.FileName == hf.Name);
+                        bool isDownloaded = !string.IsNullOrWhiteSpace(hfPath) && Directory.Exists(hfPath) && File.Exists(Path.Combine(hfPath, hf.Name));
+
+                        if (existing == null)
                         {
                             Updates.Add(new UpdateFile
                             {
                                 HotfixData = hf,
-                                StatusText = "НОВОЕ",
-                                StatusBgColor = "#BEE3F8",
-                                StatusFgColor = "#2B6CB0",
-                                IsSelected = AutoDownload
+                                StatusText = isDownloaded ? "ГОТОВО" : "НОВОЕ",
+                                StatusBgColor = isDownloaded ? "#48BB78" : "#BEE3F8",
+                                StatusFgColor = isDownloaded ? "White" : "#2B6CB0",
+                                IsSelected = !isDownloaded && AutoDownload
                             });
+                        }
+                        else
+                        {
+                            // Если файл появился на диске (или пропал), обновляем статус существующего элемента
+                            if (isDownloaded && existing.StatusText != "ГОТОВО")
+                            {
+                                existing.StatusText = "ГОТОВО";
+                                existing.StatusBgColor = "#48BB78";
+                                existing.StatusFgColor = "White";
+                                existing.IsSelected = false;
+                                existing.ProgressValue = 100;
+                            }
+                            else if (!isDownloaded && existing.StatusText == "ГОТОВО")
+                            {
+                                existing.StatusText = "НОВОЕ";
+                                existing.StatusBgColor = "#BEE3F8";
+                                existing.StatusFgColor = "#2B6CB0";
+                                existing.IsSelected = AutoDownload;
+                                existing.ProgressValue = 0;
+                            }
                         }
                     }
                 });
@@ -591,12 +614,25 @@ namespace AISManager.ViewModels
 
                 // 2. А теперь запускаем закачки, если включена автозагрузка
                 // Фиксы
+                bool fixesProcessed = false;
                 if (AutoDownload)
                 {
                     var selected = Updates.Where(u => u.IsSelected && u.StatusText == "НОВОЕ").ToList();
                     if (selected.Any())
                     {
                         await DownloadSelectedAsync(internalCall: true);
+                        fixesProcessed = true;
+                    }
+                }
+
+                // Если скачивание не запускалось, но включена авто-сборка SFX - проверим, нужно ли собрать/обновить SFX
+                if (_config.AutoSfx && !fixesProcessed && !string.IsNullOrEmpty(DownloadPath) && Directory.Exists(DownloadPath))
+                {
+                    var hasArchives = Directory.GetFiles(DownloadPath).Any(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".rar", StringComparison.OrdinalIgnoreCase));
+                    if (hasArchives)
+                    {
+                        BusyMessage = "Проверка актуальности SFX...";
+                        await _archiveProcessorService.ProcessDownloadedHotfixesAsync(DownloadPath, _config);
                     }
                 }
 
@@ -679,7 +715,16 @@ namespace AISManager.ViewModels
 
                     try
                     {
-                        await _hotfixService.DownloadHotfixAsync(file.HotfixData, downloadPath, progress, _fixesCts.Token);
+                        string localFile = Path.Combine(downloadPath, file.FileName);
+                        if (internalCall && File.Exists(localFile))
+                        {
+                            file.ProgressValue = 100;
+                            file.ProgressText = "100%";
+                        }
+                        else
+                        {
+                            await _hotfixService.DownloadHotfixAsync(file.HotfixData, downloadPath, progress, _fixesCts.Token);
+                        }
 
                         file.StatusText = "ГОТОВО";
                         file.StatusBgColor = "#48BB78";
