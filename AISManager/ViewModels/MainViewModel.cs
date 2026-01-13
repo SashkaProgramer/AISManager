@@ -565,10 +565,30 @@ namespace AISManager.ViewModels
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     string hfPath = DownloadPath;
+
+                    // Собираем ключи (версия + номер) всех файлов, которые уже есть в папке
+                    var localKeys = new HashSet<(string, int)>();
+                    if (!string.IsNullOrWhiteSpace(hfPath) && Directory.Exists(hfPath))
+                    {
+                        var files = Directory.GetFiles(hfPath);
+                        foreach (var f in files)
+                        {
+                            var key = ArchiveProcessorService.ParseArchiveName(Path.GetFileName(f));
+                            if (key.HasValue) localKeys.Add(key.Value);
+                        }
+                    }
+
                     foreach (var hf in hotfixes)
                     {
                         var existing = Updates.FirstOrDefault(u => u.FileName == hf.Name);
-                        bool isDownloaded = !string.IsNullOrWhiteSpace(hfPath) && Directory.Exists(hfPath) && File.Exists(Path.Combine(hfPath, hf.Name));
+
+                        // Определяем, скачан ли файл, через парсинг его имени
+                        bool isDownloaded = false;
+                        var hfKey = ArchiveProcessorService.ParseArchiveName(hf.Name);
+                        if (hfKey.HasValue && localKeys.Contains(hfKey.Value))
+                        {
+                            isDownloaded = true;
+                        }
 
                         if (existing == null)
                         {
@@ -578,7 +598,8 @@ namespace AISManager.ViewModels
                                 StatusText = isDownloaded ? "ГОТОВО" : "НОВОЕ",
                                 StatusBgColor = isDownloaded ? "#48BB78" : "#BEE3F8",
                                 StatusFgColor = isDownloaded ? "White" : "#2B6CB0",
-                                IsSelected = !isDownloaded && AutoDownload
+                                IsSelected = !isDownloaded && AutoDownload,
+                                ProgressValue = isDownloaded ? 100 : 0
                             });
                         }
                         else
@@ -752,7 +773,8 @@ namespace AISManager.ViewModels
                 if (_config.AutoSfx)
                 {
                     BusyMessage = "Создание SFX...";
-                    int processedCount = await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config);
+                    // Передаем список выбранных имен файлов, чтобы в SFX попали только они
+                    int processedCount = await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config, selected.Select(s => s.FileName));
 
                     if (processedCount > 0)
                     {

@@ -40,46 +40,75 @@ namespace AISManager.Services
             OnLog?.Invoke("WARN: " + finalMsg);
         }
 
-        public async Task<int> ProcessDownloadedHotfixesAsync(string sourcePath, AppConfig config)
+        public static (string baseName, int num)? ParseArchiveName(string fileName)
+        {
+            var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+            var match = NameParserRegex.Match(nameWithoutExt);
+            if (match.Success)
+            {
+                var basePart = match.Groups[1].Value;
+                var garbagePart = match.Groups[2].Value;
+                var numberMatches = NumberFinderRegex.Matches(garbagePart);
+
+                if (numberMatches.Count > 0)
+                {
+                    if (int.TryParse(numberMatches[numberMatches.Count - 1].Value, out int num))
+                        return (basePart, num);
+                }
+            }
+            return null;
+        }
+
+        public async Task<int> ProcessDownloadedHotfixesAsync(string sourcePath, AppConfig config, IEnumerable<string>? selectedFiles = null)
         {
             return await Task.Run(() =>
             {
+                if (!Directory.Exists(sourcePath)) return 0;
+
                 var files = Directory.GetFiles(sourcePath);
                 var archivesToProcess = new List<ArchiveInfo>();
 
-                // LogInfo("Обработка архивов...");
+                // Если переданы выбранные файлы, создаем набор ключей для фильтрации
+                HashSet<(string, int)>? selectedKeys = null;
+                if (selectedFiles != null)
+                {
+                    selectedKeys = new HashSet<(string, int)>();
+                    foreach (var f in selectedFiles)
+                    {
+                        var key = ParseArchiveName(f);
+                        if (key.HasValue) selectedKeys.Add(key.Value);
+                    }
+                }
 
                 foreach (var filePath in files)
                 {
-                    var fileName = Path.GetFileNameWithoutExtension(filePath);
+                    var fileName = Path.GetFileName(filePath);
                     var extension = Path.GetExtension(filePath).ToLower();
-
                     if (extension != ".zip" && extension != ".rar") continue;
 
-                    var match = NameParserRegex.Match(fileName);
-                    if (match.Success)
+                    var info = ParseArchiveName(fileName);
+                    if (info.HasValue)
                     {
-                        var basePart = match.Groups[1].Value;
-                        var garbagePart = match.Groups[2].Value;
-                        var numberMatch = NumberFinderRegex.Matches(garbagePart);
-
-                        if (numberMatch.Count > 0)
+                        // Если есть фильтр - проверяем, входит ли этот файл в список выбранных
+                        if (selectedKeys != null && !selectedKeys.Contains(info.Value))
                         {
-                            var fixNumberStr = numberMatch[numberMatch.Count - 1].Value;
-                            archivesToProcess.Add(new ArchiveInfo
-                            {
-                                OriginalFilePath = filePath,
-                                BaseName = basePart,
-                                FixNumber = int.Parse(fixNumberStr),
-                                Extension = extension
-                            });
+                            continue;
                         }
+
+                        archivesToProcess.Add(new ArchiveInfo
+                        {
+                            OriginalFilePath = filePath,
+                            BaseName = info.Value.baseName,
+                            FixNumber = info.Value.num,
+                            Extension = extension
+                        });
                     }
                 }
 
                 if (archivesToProcess.Count == 0)
                 {
-                    LogWarning("Файлы для обработки не найдены.");
+                    if (selectedFiles != null) LogWarning("Выбранные файлы не найдены в папке для обработки.");
+                    else LogWarning("Архивы для обработки не найдены.");
                     return 0;
                 }
 
@@ -95,21 +124,8 @@ namespace AISManager.Services
                 {
                     foreach (var archive in sortedList)
                     {
-                        string currentFilePath = archive.OriginalFilePath;
-                        string cleanFileName = $"{archive.BaseName}_{archive.FixNumber}{archive.Extension}";
-                        string cleanFilePath = Path.Combine(Path.GetDirectoryName(currentFilePath)!, cleanFileName);
-
-                        if (!string.Equals(Path.GetFileName(currentFilePath), cleanFileName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (!File.Exists(cleanFilePath))
-                            {
-                                File.Move(currentFilePath, cleanFilePath);
-                            }
-                            currentFilePath = cleanFilePath;
-                        }
-
-                        if (archive.Extension == ".zip") UnzipFile(currentFilePath, stagingPath);
-                        else if (archive.Extension == ".rar") UnrarFile(currentFilePath, stagingPath);
+                        if (archive.Extension == ".zip") UnzipFile(archive.OriginalFilePath, stagingPath);
+                        else if (archive.Extension == ".rar") UnrarFile(archive.OriginalFilePath, stagingPath);
                     }
 
                     var lastFixNumber = sortedList.Last().FixNumber;
