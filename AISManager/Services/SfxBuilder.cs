@@ -24,15 +24,16 @@ namespace AISManager.Services
 
         private void LogInfo(string message, params object[] args)
         {
-            string finalMsg = args.Length > 0 ? string.Format(message.Replace("{", "").Replace("}", ""), args) : message;
+            string finalMsg = args.Length > 0 ? string.Format(message, args) : message;
             s_logger.Information(message, args);
             OnLog?.Invoke(finalMsg);
         }
 
         private void LogWarning(string message, params object[] args)
         {
+            string finalMsg = args.Length > 0 ? string.Format(message, args) : message;
             s_logger.Warning(message, args);
-            OnLog?.Invoke("WARN: " + message);
+            OnLog?.Invoke("WARN: " + finalMsg);
         }
 
         public void Build(string contentSourceDir, string outputExePath)

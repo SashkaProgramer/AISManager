@@ -28,19 +28,16 @@ namespace AISManager.Services
 
         private void LogInfo(string message, params object[] args)
         {
-            var formatted = string.Format(message.Replace("{", "{{").Replace("}", "}}"), args);
-            // Actually Serilog uses {0} style or named properties. 
-            // For simplicity, let's just use string.Format if there are args.
-            string finalMsg = args.Length > 0 ? string.Format(message.Replace("{", "").Replace("}", ""), args) : message;
-            // Better:
+            string finalMsg = args.Length > 0 ? string.Format(message, args) : message;
             s_logger.Information(message, args);
             OnLog?.Invoke(finalMsg);
         }
 
         private void LogWarning(string message, params object[] args)
         {
+            string finalMsg = args.Length > 0 ? string.Format(message, args) : message;
             s_logger.Warning(message, args);
-            OnLog?.Invoke("WARN: " + message);
+            OnLog?.Invoke("WARN: " + finalMsg);
         }
 
         public async Task ProcessDownloadedHotfixesAsync(string sourcePath, AppConfig config)
