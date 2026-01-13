@@ -25,6 +25,8 @@ namespace AISManager.ViewModels
         private string _logOutput = "";
         private bool _isBusy;
         private System.Threading.Timer? _autoCheckTimer;
+        private const string DistroOeUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/OE/";
+        private const string DistroPromUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/AisNalog3_PROM/";
 
         private DistroInfo? _latestDistro;
         public DistroInfo? LatestDistro
@@ -33,6 +35,17 @@ namespace AISManager.ViewModels
             set
             {
                 if (SetProperty(ref _latestDistro, value))
+                    CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        private DistroInfo? _latestAisProm;
+        public DistroInfo? LatestAisProm
+        {
+            get => _latestAisProm;
+            set
+            {
+                if (SetProperty(ref _latestAisProm, value))
                     CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -95,6 +108,34 @@ namespace AISManager.ViewModels
             }
         }
 
+        public bool AutoDownloadDistro
+        {
+            get => _config.AutoDownloadDistro;
+            set
+            {
+                if (_config.AutoDownloadDistro != value)
+                {
+                    _config.AutoDownloadDistro = value;
+                    _config.Save();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool AutoDownloadAisNalog3
+        {
+            get => _config.AutoDownloadAisNalog3;
+            set
+            {
+                if (_config.AutoDownloadAisNalog3 != value)
+                {
+                    _config.AutoDownloadAisNalog3 = value;
+                    _config.Save();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public string AutoCheckStatusText => IsFullAuto ? "Автопроверка активна" : "Автопроверка выключена";
         public string AutoCheckStatusColor => IsFullAuto ? "#48BB78" : "#718096";
 
@@ -135,6 +176,20 @@ namespace AISManager.ViewModels
                 if (_config.DistroDownloadPath != value)
                 {
                     _config.DistroDownloadPath = value;
+                    _config.Save();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string AisNalog3DownloadPath
+        {
+            get => _config.AisNalog3DownloadPath;
+            set
+            {
+                if (_config.AisNalog3DownloadPath != value)
+                {
+                    _config.AisNalog3DownloadPath = value;
                     _config.Save();
                     OnPropertyChanged();
                 }
@@ -197,6 +252,10 @@ namespace AISManager.ViewModels
         public ICommand DownloadDistroCommand { get; }
         public ICommand SelectDistroDownloadPathCommand { get; }
 
+        public ICommand CheckAisPromCommand { get; }
+        public ICommand DownloadAisPromCommand { get; }
+        public ICommand SelectAisPromDownloadPathCommand { get; }
+
         public MainViewModel()
         {
             _config = AppConfig.Instance;
@@ -224,6 +283,10 @@ namespace AISManager.ViewModels
             DownloadDistroCommand = new RelayCommand(async _ => await DownloadLatestDistroAsync(), _ => !IsBusy && LatestDistro != null);
             SelectDistroDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для загрузки дистрибутивов", path => DistroDownloadPath = path));
 
+            CheckAisPromCommand = new RelayCommand(async _ => await CheckAisPromAsync());
+            DownloadAisPromCommand = new RelayCommand(async _ => await DownloadLatestAisPromAsync(), _ => !IsBusy && LatestAisProm != null);
+            SelectAisPromDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для установки АИС Налог 3 (Пром)", path => AisNalog3DownloadPath = path));
+
             Updates.CollectionChanged += (s, e) =>
             {
                 if (e.NewItems != null)
@@ -237,7 +300,12 @@ namespace AISManager.ViewModels
             if (IsFullAuto) StartAutoCheck();
 
             // Initial check
-            Task.Run(CheckUpdatesAsync);
+            Task.Run(async () =>
+            {
+                await CheckUpdatesAsync();
+                await CheckDistrosAsync();
+                await CheckAisPromAsync();
+            });
         }
 
         private void OpenAppDataFolder()
@@ -293,7 +361,12 @@ namespace AISManager.ViewModels
             {
                 if (!IsBusy)
                 {
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await CheckUpdatesAsync());
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        await CheckUpdatesAsync();
+                        if (AutoDownloadDistro) await CheckDistrosAsync();
+                        if (AutoDownloadAisNalog3) await CheckAisPromAsync();
+                    });
                 }
             }, null, TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes), TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes));
         }
@@ -349,7 +422,7 @@ namespace AISManager.ViewModels
             }
             catch (Exception ex)
             {
-                AddLog($"Ошибка: {ex.Message}");
+                AddLog("Ошибка при проверке обновлений (см. лог)");
                 _logger.Error(ex, "Error checking updates");
                 CurrentVersion = "Ошибка";
             }
@@ -435,21 +508,56 @@ namespace AISManager.ViewModels
 
             try
             {
-                AddLog("Проверка обновлений дистрибутивов на FTP...");
-                LatestDistro = await _distroService.GetLatestDistroAsync();
+                LatestDistro = await _distroService.GetLatestDistroAsync(DistroOeUrl);
 
                 if (LatestDistro != null)
                 {
-                    AddLog($"Найдена последняя версия дистрибутива: {LatestDistro.Version} ({LatestDistro.FileName})");
-                }
-                else
-                {
-                    AddLog("Не удалось найти дистрибутивы на FTP.");
+                    if (AutoDownloadDistro)
+                    {
+                        string localPath = Path.Combine(DistroDownloadPath, LatestDistro.FileName);
+                        if (!File.Exists(localPath))
+                        {
+                            IsBusy = false;
+                            await DownloadLatestDistroAsync();
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
-                AddLog($"Ошибка при проверке дистрибутивов: {ex.Message}");
+                _logger.Error(ex, "Error checking OE distro");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task CheckAisPromAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+
+            try
+            {
+                LatestAisProm = await _distroService.GetLatestDistroAsync(DistroPromUrl);
+
+                if (LatestAisProm != null)
+                {
+                    if (AutoDownloadAisNalog3)
+                    {
+                        string localPath = Path.Combine(AisNalog3DownloadPath, LatestAisProm.FileName);
+                        if (!File.Exists(localPath))
+                        {
+                            IsBusy = false;
+                            await DownloadLatestAisPromAsync();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error checking PROM distro");
             }
             finally
             {
@@ -464,7 +572,7 @@ namespace AISManager.ViewModels
             string targetPath = DistroDownloadPath;
             if (string.IsNullOrWhiteSpace(targetPath))
             {
-                AddLog("Ошибка: Не указан путь для загрузки дистрибутивов в настройках.");
+                AddLog("Ошибка: Не указан путь для OE в настройках.");
                 return;
             }
 
@@ -473,29 +581,56 @@ namespace AISManager.ViewModels
             {
                 LatestDistro.IsDownloading = true;
                 LatestDistro.DownloadStatus = "ЗАГРУЗКА";
-                AddLog($"Начало загрузки дистрибутива {LatestDistro.FileName}...");
 
-                var progress = new Progress<int>(p =>
-                {
-                    if (LatestDistro != null)
-                        LatestDistro.Progress = p;
-                });
-
+                var progress = new Progress<int>(p => { if (LatestDistro != null) LatestDistro.Progress = p; });
                 await _distroService.DownloadDistroAsync(LatestDistro, targetPath, progress);
 
                 LatestDistro.DownloadStatus = "ГОТОВО";
-                AddLog($"Дистрибутив успешно скачан в: {targetPath}");
+                AddLog($"OE скачан: {LatestDistro.FileName}");
             }
             catch (Exception ex)
             {
-                AddLog($"Ошибка при скачивании дистрибутива: {ex.Message}");
-                if (LatestDistro != null)
-                    LatestDistro.DownloadStatus = "ОШИБКА";
+                AddLog($"Ошибка OE: {ex.Message}");
+                if (LatestDistro != null) LatestDistro.DownloadStatus = "ОШИБКА";
             }
             finally
             {
-                if (LatestDistro != null)
-                    LatestDistro.IsDownloading = false;
+                if (LatestDistro != null) LatestDistro.IsDownloading = false;
+                IsBusy = false;
+            }
+        }
+
+        private async Task DownloadLatestAisPromAsync()
+        {
+            if (LatestAisProm == null || IsBusy) return;
+
+            string targetPath = AisNalog3DownloadPath;
+            if (string.IsNullOrWhiteSpace(targetPath))
+            {
+                AddLog("Ошибка: Не указан путь для Пром в настройках.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                LatestAisProm.IsDownloading = true;
+                LatestAisProm.DownloadStatus = "ЗАГРУЗКА";
+
+                var progress = new Progress<int>(p => { if (LatestAisProm != null) LatestAisProm.Progress = p; });
+                await _distroService.DownloadDistroAsync(LatestAisProm, targetPath, progress);
+
+                LatestAisProm.DownloadStatus = "ГОТОВО";
+                AddLog($"АИС Налог 3 (Пром) скачан: {LatestAisProm.FileName}");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка Пром: {ex.Message}");
+                if (LatestAisProm != null) LatestAisProm.DownloadStatus = "ОШИБКА";
+            }
+            finally
+            {
+                if (LatestAisProm != null) LatestAisProm.IsDownloading = false;
                 IsBusy = false;
             }
         }

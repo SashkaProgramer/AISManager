@@ -11,34 +11,30 @@ namespace AISManager.Services
 {
     public interface IDistroService
     {
-        Task<DistroInfo?> GetLatestDistroAsync();
+        Task<DistroInfo?> GetLatestDistroAsync(string ftpUrl);
         Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null);
         Action<string>? OnLog { get; set; }
     }
 
     public class DistroService : IDistroService
     {
-        private const string FtpBaseUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/OE/";
         private readonly ILogger _logger = Log.ForContext<DistroService>();
 
         public Action<string>? OnLog { get; set; }
         private void AddUiLog(string message) => OnLog?.Invoke(message);
 
-        public async Task<DistroInfo?> GetLatestDistroAsync()
+        public async Task<DistroInfo?> GetLatestDistroAsync(string ftpUrl)
         {
             try
             {
-                AddUiLog("Подключение к FTP: " + FtpBaseUrl);
+                _logger.Debug("Checking latest distro at {Url}", ftpUrl);
                 // 1. Get version folders
-                var versions = await ListFtpDirectoryAsync(FtpBaseUrl);
+                var versions = await ListFtpDirectoryAsync(ftpUrl);
                 if (!versions.Any())
                 {
-                    AddUiLog("❌ Ошибка: FTP вернул пустой список папок (возможно, нет прав).");
-                    _logger.Warning("ListFtpDirectoryAsync returned empty list for {Url}", FtpBaseUrl);
+                    _logger.Warning("ListFtpDirectoryAsync returned empty list for {Url}", ftpUrl);
                     return null;
                 }
-
-                AddUiLog($"Найдено элементов на FTP: {versions.Count}");
 
                 // Регулярка для поиска версии: 4 числа через точку ИЛИ через подчеркивание
                 var versionRegex = new System.Text.RegularExpressions.Regex(@"(\d+[\._]\d+[\._]\d+[\._]\d+)");
@@ -59,8 +55,7 @@ namespace AISManager.Services
 
                 if (!versionEntries.Any())
                 {
-                    AddUiLog("❌ Ошибка: Не найдено папок с версиями (X.X.X.X или X_X_X_X).");
-                    AddUiLog("Первые элементы: " + string.Join(", ", versions.Take(3)));
+                    _logger.Warning("No version folders found in {Url}", ftpUrl);
                     return null;
                 }
 
@@ -68,16 +63,13 @@ namespace AISManager.Services
                 string latestVersionFolder = latest.Raw;
                 string versionStr = latest.Version;
 
-                AddUiLog($"Выбрана версия: {versionStr} (папка: {latestVersionFolder})");
-
                 // 2. Go to EKP folder
-                string ekpPath = $"{FtpBaseUrl}{latestVersionFolder}/EKP/";
-                AddUiLog("Поиск .rar в: " + ekpPath);
+                string ekpPath = $"{ftpUrl}{latestVersionFolder}/EKP/";
                 var files = await ListFtpDirectoryAsync(ekpPath);
 
                 if (!files.Any())
                 {
-                    AddUiLog("❌ Ошибка: В папке EKP пусто.");
+                    _logger.Warning("EKP folder is empty: {Url}", ekpPath);
                     return null;
                 }
 
@@ -86,12 +78,9 @@ namespace AISManager.Services
 
                 if (string.IsNullOrEmpty(rarFile))
                 {
-                    AddUiLog("❌ Ошибка: .rar файл не найден.");
-                    AddUiLog("Найдено файлов: " + string.Join(", ", files.Take(3)));
+                    _logger.Warning("No .rar file found in {Url}", ekpPath);
                     return null;
                 }
-
-                AddUiLog($"✅ Готово к скачиванию: {rarFile}");
 
                 return new DistroInfo
                 {
@@ -102,8 +91,7 @@ namespace AISManager.Services
             }
             catch (Exception ex)
             {
-                AddUiLog("❌ Критическая ошибка FTP: " + ex.Message);
-                _logger.Error(ex, "Error getting latest distro from FTP");
+                _logger.Error(ex, "Error getting latest distro from FTP: {Url}", ftpUrl);
                 return null;
             }
         }
@@ -117,6 +105,22 @@ namespace AISManager.Services
 
                 _logger.Information("Starting download of {FileName} to {LocalPath}", distro.FileName, fullFilePath);
 
+                // Get file size first to ensure we can track progress (some FTP servers return -1 for ContentLength on download request)
+                long fileSize = -1;
+                try
+                {
+#pragma warning disable SYSLIB0014
+                    var sizeRequest = (FtpWebRequest)WebRequest.Create(distro.FullUrl);
+#pragma warning restore SYSLIB0014
+                    sizeRequest.Method = WebRequestMethods.Ftp.GetFileSize;
+                    using var sizeResponse = (FtpWebResponse)await sizeRequest.GetResponseAsync();
+                    fileSize = sizeResponse.ContentLength;
+                }
+                catch (Exception exSize)
+                {
+                    _logger.Warning(exSize, "Could not get file size for FTP progress tracking.");
+                }
+
 #pragma warning disable SYSLIB0014
                 var request = (FtpWebRequest)WebRequest.Create(distro.FullUrl);
 #pragma warning restore SYSLIB0014
@@ -125,7 +129,9 @@ namespace AISManager.Services
                 request.EnableSsl = false;
 
                 using var response = (FtpWebResponse)await request.GetResponseAsync();
-                long fileSize = response.ContentLength;
+
+                // Use fileSize from GetFileSize if ContentLength is not available
+                if (fileSize <= 0) fileSize = response.ContentLength;
 
                 using var responseStream = response.GetResponseStream();
                 using var fileStream = new FileStream(fullFilePath, FileMode.Create);
@@ -188,7 +194,6 @@ namespace AISManager.Services
             catch (Exception ex)
             {
                 _logger.Warning("Could not list FTP directory {Url}: {Message}", url, ex.Message);
-                AddUiLog($"⚠️ Ошибка листинга {url}: {ex.Message}");
             }
             return results;
         }

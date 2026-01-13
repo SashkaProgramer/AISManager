@@ -339,50 +339,81 @@
                     
                     <TextBlock Grid.Row="0" Text="Дистрибутивы ПО (FTP)" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
                     
-                    <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="20" VerticalAlignment="Top">
+                    <ScrollViewer Grid.Row="1">
                         <StackPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                            <!-- ГРУППА OE -->
+                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,20">
                                 <StackPanel>
-                                    <TextBlock Text="Последняя версия в OE:" Foreground="#718096" FontSize="12"/>
-                                    <TextBlock Text="{Binding LatestDistro.Version, FallbackValue='Не проверено'}" FontWeight="Bold" FontSize="24" Margin="0,5,0,0"/>
-                                    <TextBlock Text="{Binding LatestDistro.FileName}" Foreground="#A0AEC0" FontSize="12" Margin="0,2,0,0"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Последняя версия в OE:" Foreground="#718096" FontSize="12"/>
+                                            <TextBlock Text="{Binding LatestDistro.Version, FallbackValue='Не проверено'}" FontWeight="Bold" FontSize="20" Margin="0,5,0,0"/>
+                                            <TextBlock Text="{Binding LatestDistro.FileName}" Foreground="#A0AEC0" FontSize="11" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="↻ Обновить OE" Command="{Binding CheckDistrosCommand}" Padding="15,5" Background="#EDF2F7" BorderBrush="#E2E8F0" BorderThickness="1" Cursor="Hand" VerticalAlignment="Top"/>
+                                    </Grid>
+                                    <Separator Margin="0,15" Background="#E2E8F0"/>
+                                    <StackPanel>
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LatestDistro}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <TextBlock Text="Статус:" Foreground="#718096" FontSize="12"/>
+                                        <TextBlock Text="{Binding LatestDistro.DownloadStatus}" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                        <ProgressBar Value="{Binding LatestDistro.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
+                                                     Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <Button Content="⬇️ Скачать OE (.rar)" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding DownloadDistroCommand}" HorizontalAlignment="Left" Margin="0,15,0,0"/>
+                                    </StackPanel>
                                 </StackPanel>
-                                <Button Grid.Column="1" Content="↻ Обновить" Command="{Binding CheckDistrosCommand}" Padding="15,5" Background="#EDF2F7" BorderBrush="#E2E8F0" BorderThickness="1" Cursor="Hand" VerticalAlignment="Top"/>
-                            </Grid>
-                            
-                            <Separator Margin="0,20" Background="#E2E8F0"/>
-                            
-                            <!-- Детали дистрибутива, видны только если LatestDistro != null -->
-                            <StackPanel x:Name="DistroDetails">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding LatestDistro}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-                                
-                                <TextBlock Text="Статус:" Foreground="#718096" FontSize="12" Margin="0,15,0,0"/>
-                                <TextBlock Text="{Binding LatestDistro.DownloadStatus}" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                                
-                                <ProgressBar Value="{Binding LatestDistro.Progress}" Maximum="100" Height="10" Margin="0,15,0,5" 
-                                             Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                
-                                <Button Content="⬇️ Скачать дистрибутив (.rar)" 
-                                        Style="{StaticResource PrimaryButtonStyle}" 
-                                        Command="{Binding DownloadDistroCommand}" 
-                                        HorizontalAlignment="Left" 
-                                        Margin="0,20,0,0"/>
-                            </StackPanel>
+                            </Border>
+
+                            <!-- ГРУППА PROM -->
+                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="20">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Последняя версия АИС Налог 3 (Пром):" Foreground="#718096" FontSize="12"/>
+                                            <TextBlock Text="{Binding LatestAisProm.Version, FallbackValue='Не проверено'}" FontWeight="Bold" FontSize="20" Margin="0,5,0,0"/>
+                                            <TextBlock Text="{Binding LatestAisProm.FileName}" Foreground="#A0AEC0" FontSize="11" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="↻ Обновить Пром" Command="{Binding CheckAisPromCommand}" Padding="15,5" Background="#EDF2F7" BorderBrush="#E2E8F0" BorderThickness="1" Cursor="Hand" VerticalAlignment="Top"/>
+                                    </Grid>
+                                    <Separator Margin="0,15" Background="#E2E8F0"/>
+                                    <StackPanel>
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LatestAisProm}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <TextBlock Text="Статус:" Foreground="#718096" FontSize="12"/>
+                                        <TextBlock Text="{Binding LatestAisProm.DownloadStatus}" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                        <ProgressBar Value="{Binding LatestAisProm.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
+                                                     Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <Button Content="⬇️ Скачать Пром (.rar)" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding DownloadAisPromCommand}" HorizontalAlignment="Left" Margin="0,15,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </Border>
+                    </ScrollViewer>
                     
                     <TextBlock Grid.Row="2" Text="* Дистрибутив будет скачан в папку, указанную в настройках." Foreground="#A0AEC0" FontSize="11" Margin="0,10,0,0"/>
                 </Grid>
@@ -400,10 +431,16 @@
                                       Margin="0,0,0,10" />
                             <CheckBox IsChecked="{Binding AutoDownload}"
                                       Content="Автоматически скачивать новые фиксы"
-                                      Margin="0,0,0,20" />
-                            <TextBlock Text="Папка выгрузки (архивы):"
-                                       Foreground="#718096"
-                                       Margin="0,0,0,5" />
+                                      Margin="0,0,0,10" />
+                             <CheckBox IsChecked="{Binding AutoDownloadDistro}"
+                                       Content="Автоматически скачивать новый дистрибутив (OE)"
+                                       Margin="0,0,0,10" />
+                             <CheckBox IsChecked="{Binding AutoDownloadAisNalog3}"
+                                       Content="Автоматически скачивать АИС Налог 3 (Пром)"
+                                       Margin="0,0,0,20" />
+                             <TextBlock Text="Папка выгрузки (архивы):"
+                                        Foreground="#718096"
+                                        Margin="0,0,0,5" />
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -448,6 +485,22 @@
                                         Width="35"
                                         Margin="5,0,0,0"
                                         Command="{Binding SelectDistroDownloadPathCommand}" />
+                            </Grid>
+                            <TextBlock Text="Папка для АИС Налог 3 (Пром):"
+                                       Foreground="#718096"
+                                       Margin="0,0,0,5" />
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding AisNalog3DownloadPath, UpdateSourceTrigger=PropertyChanged}"
+                                         Padding="5" />
+                                <Button Grid.Column="1"
+                                        Content="📁"
+                                        Width="35"
+                                        Margin="5,0,0,0"
+                                        Command="{Binding SelectAisPromDownloadPathCommand}" />
                             </Grid>
                             <Separator Margin="0,10,0,20"
                                        Background="#E2E8F0" />
