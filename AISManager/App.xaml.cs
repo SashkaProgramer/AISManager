@@ -5,12 +5,15 @@ namespace AISManager
 {
     public partial class App : System.Windows.Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+        public App()
         {
-            base.OnStartup(e);
+            // Настраиваем вывод ошибок самого Serilog (поможет, если что-то не так с путями)
+            Serilog.Debugging.SelfLog.Enable(msg => System.Diagnostics.Debug.WriteLine(msg));
 
-            var logPath = System.IO.Path.Combine(AISManager.AppData.AppPath.LogsPath, "log.txt");
             var logDir = AISManager.AppData.AppPath.LogsPath;
+            var logPath = System.IO.Path.Combine(logDir, "log.txt");
+
+            // Создаем папку в AppData, если её нет
             if (!System.IO.Directory.Exists(logDir))
             {
                 System.IO.Directory.CreateDirectory(logDir);
@@ -22,7 +25,13 @@ namespace AISManager
                 .WriteTo.Debug()
                 .CreateLogger();
 
-            Log.Information("Application Starting... Log file: {LogPath}", logPath);
+            Log.Information("--- Application Initialize ---");
+            Log.Information("Logs are located at: {LogPath}", logPath);
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
 
             var mainWindow = new MainWindow();
             mainWindow.Show();
