@@ -1,12 +1,12 @@
 ﻿$SCRIPT_VERSION = "1.0.1"
-$API_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
-# $MODEL = "xiaomi/mimo-v2-flash:free"
-$MODEL = "mistralai/devstral-2512:free"
-$API_KEY = "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"
+$API_BASE_URL = "https://api.deepseek.com/chat/completions"
+$MODEL = "deepseek-chat"
+# $MODEL = "deepseek-reasoner"
+$API_KEY = "sk-18b52d4c708c4a7299912a0ddfc7c1c2"
 
 $MAX_RETRIES = 3
 $TIMEOUT_SECONDS = 30
-$MAX_DIFF_LENGTH = 128000
+$MAX_DIFF_LENGTH = 32000
 
 $LOG_FILE = "commit_message.log"
 

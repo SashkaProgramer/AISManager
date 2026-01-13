@@ -271,11 +271,19 @@ namespace AISManager.ViewModels
                 if (SetProperty(ref _isLogVisible, value))
                 {
                     OnPropertyChanged(nameof(LogVisibility));
+                    if (value) HasUnreadLogs = false; // Сбрасываем при открытии
                 }
             }
         }
 
         public Visibility LogVisibility => IsLogVisible ? Visibility.Visible : Visibility.Collapsed;
+
+        private bool _hasUnreadLogs;
+        public bool HasUnreadLogs
+        {
+            get => _hasUnreadLogs;
+            set => SetProperty(ref _hasUnreadLogs, value);
+        }
 
         public GridLength LogHeight
         {
@@ -785,7 +793,11 @@ namespace AISManager.ViewModels
         private void AddLog(string message)
         {
             var msg = $"[{DateTime.Now:HH:mm:ss}] {message}";
-            LogOutput += msg + "\n";
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                LogOutput += msg + "\n";
+                if (!IsLogVisible) HasUnreadLogs = true; // Показываем красную точку, если лог скрыт
+            });
         }
 
         private void ClearLogs()

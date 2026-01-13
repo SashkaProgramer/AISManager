@@ -18,6 +18,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <infra:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <infra:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
         <!-- Стили кнопок -->
         <Style x:Key="MenuButtonStyle"
                TargetType="Button">
@@ -139,6 +140,47 @@
         <Style TargetType="{x:Type ScrollViewer}">
             <Setter Property="Padding" Value="0,0,15,0" />
         </Style>
+
+        <Style x:Key="LogHandleButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#E2E8F0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4,4,0,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#CBD5E0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- АНИМАЦИИ ВЫЕЗДА ЛОГА -->
+        <Storyboard x:Key="LogOpacityIn">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.3"/>
+        </Storyboard>
+        <Storyboard x:Key="LogOpacityOut">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="LogHeightIn">
+            <DoubleAnimation Storyboard.TargetProperty="MaxHeight" To="400" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+        <Storyboard x:Key="LogHeightOut">
+            <DoubleAnimation Storyboard.TargetProperty="MaxHeight" To="0" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -196,18 +238,7 @@
                 <RowDefinition Height="80" />
                 <RowDefinition Height="*" MinHeight="100" />
                 <RowDefinition Height="Auto" /> <!-- Splitter -->
-                <RowDefinition Height="{Binding LogHeight, Mode=TwoWay}" MinHeight="0" MaxHeight="400">
-                    <RowDefinition.Style>
-                        <Style TargetType="RowDefinition">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsLogVisible}" Value="False">
-                                    <Setter Property="Height" Value="0" />
-                                    <Setter Property="MinHeight" Value="0" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </RowDefinition.Style>
-                </RowDefinition>
+                <RowDefinition Height="Auto" /> <!-- Log Panel Row -->
             </Grid.RowDefinitions>
             <!-- ШАПКА -->
             <Border Grid.Row="0"
@@ -244,17 +275,27 @@
                                        FontSize="10" />
                         </StackPanel>
                         <Button Command="{Binding ToggleLogCommand}"
-                                Width="32"
+                                Width="40"
                                 Height="32"
                                 Margin="20,0,0,0"
-                                Background="White"
-                                BorderBrush="#E2E8F0"
-                                BorderThickness="1"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 ToolTip="Показать/скрыть логи"
                                 Cursor="Hand">
-                            <TextBlock Text="📋"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Center" />
+                            <Grid>
+                                <TextBlock Text="📋"
+                                           FontSize="16"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center" 
+                                           Opacity="{Binding IsLogVisible, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=0.5}"/>
+                                <!-- Индикатор новых логов (точка) -->
+                                <Ellipse Width="8" Height="8" 
+                                         Fill="#E53E3E" 
+                                         VerticalAlignment="Top" 
+                                         HorizontalAlignment="Right" 
+                                         Margin="0,-2,-2,0"
+                                         Visibility="{Binding HasUnreadLogs, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
                         </Button>
                         <Button Command="{Binding CheckUpdatesCommand}"
                                 Width="32"
@@ -687,16 +728,52 @@
             <GridSplitter Grid.Row="2"
                           Height="4"
                           HorizontalAlignment="Stretch"
-                          Background="#CBD5E0"
-                          Visibility="{Binding LogVisibility}"
-                          ShowsPreview="True" />
+                          Background="#E2E8F0"
+                          ShowsPreview="True">
+                <GridSplitter.Style>
+                    <Style TargetType="GridSplitter">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLogVisible}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </GridSplitter.Style>
+            </GridSplitter>
 
             <!-- ЛОГ ПАНЕЛЬ -->
-            <Border Grid.Row="3"
-                    Background="#EDF2F7"
+            <Border x:Name="LogPanel" 
+                    Grid.Row="3"
+                    Background="White"
                     BorderBrush="#E2E8F0"
                     BorderThickness="0,1,0,0"
-                    Visibility="{Binding LogVisibility}">
+                    MaxHeight="0"
+                    Opacity="0">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLogVisible}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <StaticResource ResourceKey="LogOpacityIn"/>
+                                            <StaticResource ResourceKey="LogHeightIn"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <StaticResource ResourceKey="LogOpacityOut"/>
+                                            <StaticResource ResourceKey="LogHeightOut"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Grid>
                     <ScrollViewer x:Name="LogScroll">
                         <TextBox Text="{Binding LogOutput, Mode=OneWay}"
