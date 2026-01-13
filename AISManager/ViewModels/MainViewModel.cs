@@ -737,10 +737,11 @@ namespace AISManager.ViewModels
                     try
                     {
                         string localFile = Path.Combine(downloadPath, file.FileName);
-                        if (internalCall && File.Exists(localFile))
+                        if (File.Exists(localFile))
                         {
                             file.ProgressValue = 100;
                             file.ProgressText = "100%";
+                            // AddLog($"Файл {file.FileName} уже существует, пропускаем загрузку.");
                         }
                         else
                         {
