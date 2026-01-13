@@ -497,10 +497,31 @@
                       Visibility="Collapsed">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="0,0,10,20">
-                            <TextBlock Text="Настройки"
-                                       FontSize="18"
-                                       FontWeight="Bold"
-                                       Margin="0,0,0,20" />
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Настройки"
+                                           FontSize="18"
+                                           FontWeight="Bold" />
+                                <Button Grid.Column="1" 
+                                        Content="⚡ Авто-настройка всех путей" 
+                                        Command="{Binding AutoSetupPathsCommand}"
+                                        Padding="12,6" 
+                                        Background="#EDF2F7" 
+                                        BorderBrush="#CBD5E0" 
+                                        BorderThickness="1" 
+                                        Cursor="Hand">
+                                    <Button.Resources>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="4"/>
+                                        </Style>
+                                    </Button.Resources>
+                                </Button>
+                            </Grid>
+                            <TextBlock Text="Нажмите 'Авто-настройка', чтобы быстро создать структуру папок в выбранном месте." 
+                                       FontSize="12" Foreground="#718096" Margin="0,-15,0,20"/>
                             <!-- БЛОК: ПАКЕТЫ ИСПРАВЛЕНИЙ -->
                             <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,20">
                                 <StackPanel>

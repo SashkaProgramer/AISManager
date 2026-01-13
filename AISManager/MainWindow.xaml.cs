@@ -8,10 +8,31 @@ namespace AISManager
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            var vm = new MainViewModel();
+            DataContext = vm;
+
+            // Если пути не настроены, сразу открываем настройки
+            if (string.IsNullOrWhiteSpace(vm.DownloadPath) ||
+                string.IsNullOrWhiteSpace(vm.DistroDownloadPath) ||
+                string.IsNullOrWhiteSpace(vm.AisNalog3DownloadPath))
+            {
+                SwitchToView(BtnSettings);
+            }
+            else
+            {
+                SwitchToView(BtnFixes);
+            }
         }
-        // 
+
         private void MenuButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn)
+            {
+                SwitchToView(btn);
+            }
+        }
+
+        private void SwitchToView(System.Windows.Controls.Button targetButton)
         {
             // Скрываем все области контента
             ViewFixes.Visibility = Visibility.Collapsed;
@@ -24,17 +45,17 @@ namespace AISManager
             BtnSettings.Style = (Style)FindResource("MenuButtonStyle");
 
             // Активируем нужную область и меняем стиль кнопки
-            if (sender == BtnFixes)
+            if (targetButton == BtnFixes)
             {
                 ViewFixes.Visibility = Visibility.Visible;
                 BtnFixes.Style = (Style)FindResource("ActiveMenuButtonStyle");
             }
-            else if (sender == BtnSettings)
+            else if (targetButton == BtnSettings)
             {
                 ViewSettings.Visibility = Visibility.Visible;
                 BtnSettings.Style = (Style)FindResource("ActiveMenuButtonStyle");
             }
-            else if (sender == BtnDistros)
+            else if (targetButton == BtnDistros)
             {
                 ViewDistros.Visibility = Visibility.Visible;
                 BtnDistros.Style = (Style)FindResource("ActiveMenuButtonStyle");

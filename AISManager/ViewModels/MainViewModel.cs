@@ -256,6 +256,7 @@ namespace AISManager.ViewModels
         public ICommand OpenAppDataCommand { get; }
         public ICommand ToggleLogCommand { get; }
         public ICommand ClearLogsCommand { get; }
+        public ICommand AutoSetupPathsCommand { get; }
 
         public ICommand CheckDistrosCommand { get; }
         public ICommand DownloadDistroCommand { get; }
@@ -289,6 +290,7 @@ namespace AISManager.ViewModels
             OpenAppDataCommand = new RelayCommand(_ => OpenAppDataFolder());
             ToggleLogCommand = new RelayCommand(_ => IsLogVisible = !IsLogVisible);
             ClearLogsCommand = new RelayCommand(_ => ClearLogs());
+            AutoSetupPathsCommand = new RelayCommand(_ => AutoSetupPaths());
 
             CheckDistrosCommand = new RelayCommand(async _ => await CheckDistrosAsync());
             DownloadDistroCommand = new RelayCommand(async _ => await DownloadLatestDistroAsync(), _ => !IsBusy && LatestDistro != null);
@@ -347,6 +349,79 @@ namespace AISManager.ViewModels
             {
                 onSelected(dialog.SelectedPath);
             }
+        }
+
+        private void AutoSetupPaths()
+        {
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Выберите место (диск или папку), где будет создана папка AIS_Files со всей структурой",
+                UseDescriptionForTitle = true
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var targetRoot = dialog.SelectedPath;
+                try
+                {
+                    // Создаем главную объединяющую папку
+                    string mainDir = Path.Combine(targetRoot, "AIS_Files");
+
+                    // Сами подпапки
+                    string hf = Path.Combine(mainDir, "Hotfixes");
+                    string oe = Path.Combine(mainDir, "Distros_OE");
+                    string prom = Path.Combine(mainDir, "Distros_PROM");
+                    string sfx = Path.Combine(mainDir, "Ready_FIXES");
+
+                    // Создаем всю структуру (Directory.CreateDirectory создаст и родителю тоже)
+                    if (!Directory.Exists(hf)) Directory.CreateDirectory(hf);
+                    if (!Directory.Exists(oe)) Directory.CreateDirectory(oe);
+                    if (!Directory.Exists(prom)) Directory.CreateDirectory(prom);
+                    if (!Directory.Exists(sfx)) Directory.CreateDirectory(sfx);
+
+                    DownloadPath = hf;
+                    DistroDownloadPath = oe;
+                    AisNalog3DownloadPath = prom;
+                    SfxOutputPath = sfx;
+
+                    AddLog($"Авто-настройка успешно завершена! Создана структура в: {mainDir}");
+                    System.Windows.MessageBox.Show($"Все пути настроены!\n\nСоздана папка: {mainDir}\n\nТеперь всё готово к работе.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"Ошибка при авто-настройке: {ex.Message}");
+                    System.Windows.MessageBox.Show($"Не удалось создать структуру папок: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private bool EnsurePath(string path, string description, Action<string> setter)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+            {
+                var result = System.Windows.MessageBox.Show(
+                    $"Не указан или не существует путь: {description}.\nХотите выбрать папку сейчас?",
+                    "Требуется настройка",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    using var dialog = new System.Windows.Forms.FolderBrowserDialog
+                    {
+                        Description = $"Выберите {description}",
+                        UseDescriptionForTitle = true
+                    };
+
+                    if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        setter(dialog.SelectedPath);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return true;
         }
 
         private void BrowseFile(string filter, Action<string> onSelected)
@@ -479,6 +554,11 @@ namespace AISManager.ViewModels
                 return;
             }
 
+            if (!internalCall)
+            {
+                if (!EnsurePath(DownloadPath, "папка для загрузки фиксов", p => DownloadPath = p)) return;
+            }
+
             if (!internalCall) IsBusy = true;
             try
             {
@@ -546,6 +626,11 @@ namespace AISManager.ViewModels
             if (LatestDistro == null) return;
             if (!internalCall && IsBusy) return;
 
+            if (!internalCall)
+            {
+                if (!EnsurePath(DistroDownloadPath, "папка для загрузки OE", p => DistroDownloadPath = p)) return;
+            }
+
             if (!internalCall) IsBusy = true;
             _oeCts = new System.Threading.CancellationTokenSource();
             try
@@ -585,6 +670,11 @@ namespace AISManager.ViewModels
         {
             if (LatestAisProm == null) return;
             if (!internalCall && IsBusy) return;
+
+            if (!internalCall)
+            {
+                if (!EnsurePath(AisNalog3DownloadPath, "папка для загрузки Пром", p => AisNalog3DownloadPath = p)) return;
+            }
 
             if (!internalCall) IsBusy = true;
             _promCts = new System.Threading.CancellationTokenSource();
