@@ -40,14 +40,14 @@ namespace AISManager.Services
             OnLog?.Invoke("WARN: " + finalMsg);
         }
 
-        public async Task ProcessDownloadedHotfixesAsync(string sourcePath, AppConfig config)
+        public async Task<int> ProcessDownloadedHotfixesAsync(string sourcePath, AppConfig config)
         {
-            await Task.Run(() =>
+            return await Task.Run(() =>
             {
                 var files = Directory.GetFiles(sourcePath);
                 var archivesToProcess = new List<ArchiveInfo>();
 
-                LogInfo("Обработка архивов...");
+                // LogInfo("Обработка архивов...");
 
                 foreach (var filePath in files)
                 {
@@ -80,7 +80,7 @@ namespace AISManager.Services
                 if (archivesToProcess.Count == 0)
                 {
                     LogWarning("Файлы для обработки не найдены.");
-                    return;
+                    return 0;
                 }
 
                 var sortedList = archivesToProcess
@@ -119,11 +119,14 @@ namespace AISManager.Services
                     Directory.CreateDirectory(sfxOutputFolder);
                     var sfxPath = Path.Combine(sfxOutputFolder, $"FIX_{lastFixNumber}.exe");
                     _sfxBuilder.Build(stagingPath, sfxPath);
+
+                    return sortedList.Count;
                 }
                 catch (Exception ex)
                 {
                     s_logger.Error(ex, "Ошибка при обработке архивов");
                     OnLog?.Invoke("Ошибка при обработке архивов: " + ex.Message);
+                    return 0;
                 }
                 finally
                 {

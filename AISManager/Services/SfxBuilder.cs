@@ -64,7 +64,8 @@ namespace AISManager.Services
                 // CreateSfxExe(outputExePath, tempArchive7z);
                 CreateSfxExe(outputExePath, tempArchive7z);
 
-                LogInfo("SFX архив успешно создан: {0}", outputExePath);
+                // LogInfo("SFX архив успешно создан: {0}", outputExePath);
+                s_logger.Information("SFX архив успешно создан: {0}", outputExePath);
 
                 if (File.Exists(runCmdDest)) File.Delete(runCmdDest);
             }

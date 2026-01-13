@@ -666,7 +666,7 @@ namespace AISManager.ViewModels
                 string downloadPath = DownloadPath;
                 if (!Directory.Exists(downloadPath)) Directory.CreateDirectory(downloadPath);
 
-                AddLog($"Запуск загрузки фиксов ({selected.Count})...");
+                // AddLog($"Запуск загрузки фиксов ({selected.Count})...");
                 foreach (var file in selected)
                 {
                     if (file.HotfixData == null) continue;
@@ -707,9 +707,25 @@ namespace AISManager.ViewModels
                 if (_config.AutoSfx)
                 {
                     BusyMessage = "Создание SFX...";
-                    await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config);
+                    int processedCount = await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config);
+
+                    if (processedCount > 0)
+                    {
+                        // Пытаемся найти номер последнего фикса для красивого лога
+                        var lastFix = selected.OrderByDescending(f =>
+                        {
+                            var match = System.Text.RegularExpressions.Regex.Match(f.FileName, @"\d+");
+                            return match.Success ? int.Parse(match.Value) : 0;
+                        }).FirstOrDefault();
+
+                        string fixLabel = lastFix != null ? $"FIX_{System.Text.RegularExpressions.Regex.Match(lastFix.FileName, @"\d+").Value}.exe" : "FIX_№.exe";
+                        AddLog($"Сформирован сборник: {fixLabel} (объединено {processedCount} фикса).");
+                    }
                 }
-                AddLog("Загрузка фиксов завершена.");
+                else
+                {
+                    AddLog($"Загрузка фиксов завершена ({selected.Count} шт).");
+                }
             }
             catch (OperationCanceledException)
             {
