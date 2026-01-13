@@ -233,12 +233,34 @@
             </StackPanel>
         </Border>
         <!-- КОНТЕНТ -->
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="1" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
-                <RowDefinition Height="80" />
-                <RowDefinition Height="*" MinHeight="100" />
-                <RowDefinition Height="Auto" /> <!-- Splitter -->
-                <RowDefinition Height="Auto" /> <!-- Log Panel Row -->
+                <RowDefinition Height="80" /> <!-- Шапка -->
+                <RowDefinition Height="*" MinHeight="200" /> <!-- Контент -->
+                <RowDefinition x:Name="SplitterRow" Height="Auto">
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="MaxHeight" Value="Infinity" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsLogVisible}" Value="False">
+                                    <Setter Property="MaxHeight" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
+                <RowDefinition x:Name="LogRow" Height="Auto">
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="MaxHeight" Value="Infinity" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsLogVisible}" Value="False">
+                                    <Setter Property="MaxHeight" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
             </Grid.RowDefinitions>
             <!-- ШАПКА -->
             <Border Grid.Row="0"
@@ -313,16 +335,17 @@
                     </StackPanel>
                 </Grid>
             </Border>
-            <!-- ГЛАВНАЯ ОБЛАСТЬ -->
-            <Grid Grid.Row="1"
-                  Margin="30,20">
+            <!-- ГЛАВНАЯ ОБЛАСТЬ (ТЕПЕРЬ НА ВЕСЬ ЭКРАН) -->
+            <Grid Grid.Row="1" Margin="30,20" VerticalAlignment="Stretch">
                 <!-- VIEW: FIXES -->
-                <Grid x:Name="ViewFixes">
+                <Grid x:Name="ViewFixes" VerticalAlignment="Stretch" Visibility="Visible">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
+
+                    <!-- ЗАГОЛОВОК -->
                     <Grid Grid.Row="0" Margin="0,0,0,15">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -330,7 +353,8 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Список обновлений"
                                    FontSize="16"
-                                   FontWeight="Bold" />
+                                   FontWeight="Bold"
+                                   Foreground="#2D3748" />
                         <CheckBox Grid.Column="1" 
                                   Content="Выбрать все" 
                                   IsChecked="{Binding IsAllSelected}"
@@ -338,16 +362,22 @@
                                   FontWeight="SemiBold"
                                   Foreground="#4A5568"/>
                     </Grid>
+
+                    <!-- СПИСОК (ЗАНИМАЕТ ВСЁ СВОБОДНОЕ МЕСТО) -->
                     <ListView Grid.Row="1"
                               ItemsSource="{Binding Updates}"
                               BorderThickness="0"
-                              Background="Transparent">
+                              Background="Transparent"
+                              Padding="0,0,5,0"
+                              VerticalAlignment="Stretch"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
-                                <Setter Property="HorizontalContentAlignment"
-                                        Value="Stretch" />
-                                <Setter Property="Margin"
-                                        Value="0,0,0,8" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0,0,0,10" />
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListViewItem">
@@ -355,7 +385,10 @@
                                                     BorderBrush="#E2E8F0"
                                                     BorderThickness="1"
                                                     CornerRadius="8"
-                                                    Padding="15,10">
+                                                    Padding="15,12">
+                                                <Border.Effect>
+                                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.03"/>
+                                                </Border.Effect>
                                                 <ContentPresenter />
                                             </Border>
                                         </ControlTemplate>
@@ -370,33 +403,35 @@
                                         <ColumnDefinition Width="30" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="100" />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox IsChecked="{Binding IsSelected}"
                                               VerticalAlignment="Center" />
                                     <StackPanel Grid.Column="1"
-                                                VerticalAlignment="Center">
+                                                VerticalAlignment="Center"
+                                                Margin="10,0,0,0">
                                         <TextBlock Text="{Binding FileName}"
                                                    FontWeight="SemiBold"
-                                                   FontSize="14"
+                                                   FontSize="13"
                                                    Foreground="#2D3748" />
                                         <TextBlock Text="{Binding Size}"
-                                                   FontSize="12"
+                                                   FontSize="11"
                                                    Foreground="#A0AEC0" />
                                     </StackPanel>
                                     <ProgressBar Grid.Column="2"
                                                  Value="{Binding ProgressValue}"
                                                  Maximum="100"
-                                                 Height="6"
+                                                 Height="4"
                                                  VerticalAlignment="Center"
+                                                 Margin="10,0"
                                                  Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                     <Border Grid.Column="3"
                                             Background="{Binding StatusBgColor}"
-                                            CornerRadius="12"
-                                            Padding="10,4"
-                                            HorizontalAlignment="Right">
+                                            CornerRadius="10"
+                                            Padding="8,3"
+                                            HorizontalAlignment="Center">
                                         <TextBlock Text="{Binding StatusText}"
-                                                   FontSize="11"
+                                                   FontSize="10"
                                                    Foreground="{Binding StatusFgColor}"
                                                    FontWeight="Bold" />
                                     </Border>
@@ -404,19 +439,20 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                    <StackPanel Grid.Row="2"
-                                Orientation="Horizontal"
-                                HorizontalAlignment="Right"
-                                Margin="0,20,0,0">
-                        <Button x:Name="BtnProcess"
-                                Content="⬇️ Скачать и создать FIX_№.exe"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Command="{Binding DownloadCommand}"
-                                Width="240" />
-                    </StackPanel>
+
+                    <!-- КНОПКА (ВСЕГДА В САМОМ НИЗУ СВОЕЙ СЕТКИ) -->
+                    <Button Grid.Row="2"
+                            x:Name="BtnProcess"
+                            Content="⬇️ Скачать и создать FIX_№.exe"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding DownloadCommand}"
+                            HorizontalAlignment="Right"
+                            Height="40"
+                            Width="260"
+                            Margin="0,15,0,0" />
                 </Grid>
                 <!-- VIEW: DISTROS -->
-                <Grid x:Name="ViewDistros" Visibility="Collapsed">
+                <Grid x:Name="ViewDistros" Visibility="Collapsed" VerticalAlignment="Stretch">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -726,7 +762,7 @@
             </Grid>
             <!-- SPLITTER -->
             <GridSplitter Grid.Row="2"
-                          Height="4"
+                          Height="5"
                           HorizontalAlignment="Stretch"
                           Background="#E2E8F0"
                           ShowsPreview="True">
@@ -745,15 +781,17 @@
             <!-- ЛОГ ПАНЕЛЬ -->
             <Border x:Name="LogPanel" 
                     Grid.Row="3"
-                    Background="White"
+                    Background="#F8FAFC"
                     BorderBrush="#E2E8F0"
                     BorderThickness="0,1,0,0"
-                    MaxHeight="0"
-                    Opacity="0">
+                    MinHeight="50"
+                    MaxHeight="400">
                 <Border.Style>
                     <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsLogVisible}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
                                 <DataTrigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
