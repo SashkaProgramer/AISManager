@@ -25,6 +25,8 @@ namespace AISManager.ViewModels
         private string _logOutput = "";
         private bool _isBusy;
         private System.Threading.Timer? _autoCheckTimer;
+        private System.Threading.CancellationTokenSource? _oeCts;
+        private System.Threading.CancellationTokenSource? _promCts;
         private const string DistroOeUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/OE/";
         private const string DistroPromUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/AisNalog3_PROM/";
 
@@ -261,6 +263,8 @@ namespace AISManager.ViewModels
 
         public ICommand CheckAisPromCommand { get; }
         public ICommand DownloadAisPromCommand { get; }
+        public ICommand CancelDownloadOeCommand { get; }
+        public ICommand CancelDownloadPromCommand { get; }
         public ICommand SelectAisPromDownloadPathCommand { get; }
 
         public MainViewModel()
@@ -292,6 +296,8 @@ namespace AISManager.ViewModels
 
             CheckAisPromCommand = new RelayCommand(async _ => await CheckAisPromAsync());
             DownloadAisPromCommand = new RelayCommand(async _ => await DownloadLatestAisPromAsync(), _ => !IsBusy && LatestAisProm != null);
+            CancelDownloadOeCommand = new RelayCommand(_ => _oeCts?.Cancel(), _ => _oeCts != null);
+            CancelDownloadPromCommand = new RelayCommand(_ => _promCts?.Cancel(), _ => _promCts != null);
             SelectAisPromDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для установки АИС Налог 3 (Пром)", path => AisNalog3DownloadPath = path));
 
             Updates.CollectionChanged += (s, e) =>
@@ -307,12 +313,7 @@ namespace AISManager.ViewModels
             if (IsFullAuto) StartAutoCheck();
 
             // Initial check
-            Task.Run(async () =>
-            {
-                await CheckUpdatesAsync();
-                await CheckDistrosAsync();
-                await CheckAisPromAsync();
-            });
+            Task.Run(async () => await CheckAllAsync());
         }
 
         private void OpenAppDataFolder()
@@ -368,12 +369,7 @@ namespace AISManager.ViewModels
             {
                 if (!IsBusy)
                 {
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
-                    {
-                        await CheckUpdatesAsync();
-                        if (AutoDownloadDistro) await CheckDistrosAsync();
-                        if (AutoDownloadAisNalog3) await CheckAisPromAsync();
-                    });
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await CheckAllAsync());
                 }
             }, null, TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes), TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes));
         }
@@ -385,54 +381,82 @@ namespace AISManager.ViewModels
             AddLog("Автопроверка обновлений выключена.");
         }
 
-        private async Task CheckUpdatesAsync()
+        private async Task CheckAllAsync()
         {
             if (IsBusy) return;
-            BusyMessage = "Проверка обновлений...";
             IsBusy = true;
 
             try
             {
+                // 1. Сначала только проверяем наличие версий (это быстро)
+                BusyMessage = "Проверка версий...";
+
+                // Проверка AIS и Hotfixes (только получение списка)
                 CurrentVersion = await _versionService.GetCurrentAISVersionAsync();
                 var hotfixes = await _hotfixService.GetHotfixesAsync(CurrentVersion);
 
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     var existingFiles = Updates.Select(u => u.FileName).ToHashSet();
-                    int newCount = 0;
                     foreach (var hf in hotfixes)
                     {
                         if (!existingFiles.Contains(hf.Name))
                         {
-                            var newFile = new UpdateFile
+                            Updates.Add(new UpdateFile
                             {
                                 HotfixData = hf,
                                 StatusText = "НОВОЕ",
                                 StatusBgColor = "#BEE3F8",
                                 StatusFgColor = "#2B6CB0",
-                                IsSelected = AutoDownload // Авто-выбор если включена автозагрузка
-                            };
-                            Updates.Add(newFile);
-                            newCount++;
-                        }
-                    }
-
-                    if (newCount > 0)
-                    {
-                        AddLog($"Найдено новых обновлений: {newCount}");
-
-                        if (AutoDownload)
-                        {
-                            await DownloadSelectedAsync();
+                                IsSelected = AutoDownload
+                            });
                         }
                     }
                 });
+
+                // Проверка OE по FTP
+                BusyMessage = "Проверка дистрибутивов OE...";
+                LatestDistro = await _distroService.GetLatestDistroAsync(DistroOeUrl);
+
+                // Проверка Пром по FTP
+                BusyMessage = "Проверка дистрибутивов Пром...";
+                LatestAisProm = await _distroService.GetLatestDistroAsync(DistroPromUrl);
+
+                // 2. А теперь запускаем закачки, если включена автозагрузка
+                // Фиксы
+                if (AutoDownload)
+                {
+                    var selected = Updates.Where(u => u.IsSelected && u.StatusText == "НОВОЕ").ToList();
+                    if (selected.Any())
+                    {
+                        await DownloadSelectedAsync(internalCall: true);
+                    }
+                }
+
+                // OE
+                if (AutoDownloadDistro && LatestDistro != null)
+                {
+                    string localPath = Path.Combine(DistroDownloadPath, LatestDistro.FileName);
+                    if (!File.Exists(localPath))
+                    {
+                        await DownloadLatestDistroAsync(internalCall: true);
+                    }
+                }
+
+                // Пром
+                if (AutoDownloadAisNalog3 && LatestAisProm != null)
+                {
+                    string localPath = Path.Combine(AisNalog3DownloadPath, LatestAisProm.FileName);
+                    if (!File.Exists(localPath))
+                    {
+                        await DownloadLatestAisPromAsync(internalCall: true);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                AddLog("Ошибка при проверке обновлений (см. лог)");
-                _logger.Error(ex, "Error checking updates");
-                CurrentVersion = "Ошибка";
+                AddLog($"Ошибка при общей проверке: {ex.Message}");
+                _logger.Error(ex, "Error during CheckAllAsync");
             }
             finally
             {
@@ -440,50 +464,38 @@ namespace AISManager.ViewModels
             }
         }
 
-        private async Task DownloadSelectedAsync()
+        private async Task CheckUpdatesAsync()
+        {
+            if (IsBusy) return;
+            await CheckAllAsync(); // Перенаправляем на общий метод для консистентности
+        }
+
+        private async Task DownloadSelectedAsync(bool internalCall = false)
         {
             var selected = Updates.Where(u => u.IsSelected).ToList();
             if (!selected.Any())
             {
-                AddLog("Ничего не выбрано.");
+                if (!internalCall) AddLog("Ничего не выбрано.");
                 return;
             }
 
-            BusyMessage = "Загрузка и обработка пакетов...";
-            IsBusy = true;
-            string downloadPath = DownloadPath;
-            if (!Directory.Exists(downloadPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(downloadPath);
-                }
-                catch (Exception ex)
-                {
-                    AddLog($"Ошибка создания директории {downloadPath}: {ex.Message}");
-                    IsBusy = false;
-                    return;
-                }
-            }
-
+            if (!internalCall) IsBusy = true;
             try
             {
-                AddLog($"Запуск загрузки ({selected.Count})...");
+                BusyMessage = "Загрузка и обработка пакетов...";
+                string downloadPath = DownloadPath;
+                if (!Directory.Exists(downloadPath)) Directory.CreateDirectory(downloadPath);
+
+                AddLog($"Запуск загрузки фиксов ({selected.Count})...");
                 foreach (var file in selected)
                 {
                     if (file.HotfixData == null) continue;
-
                     file.IsProcessing = true;
                     file.StatusText = "ЗАГРУЗКА";
                     file.StatusBgColor = "#FEFCBF";
                     file.StatusFgColor = "#D69E2E";
 
-                    var progress = new Progress<int>(p =>
-                    {
-                        file.ProgressValue = p;
-                        file.ProgressText = $"{p}%";
-                    });
-
+                    var progress = new Progress<int>(p => { file.ProgressValue = p; file.ProgressText = $"{p}%"; });
                     await _hotfixService.DownloadHotfixAsync(file.HotfixData, downloadPath, progress);
 
                     file.StatusText = "ГОТОВО";
@@ -494,112 +506,65 @@ namespace AISManager.ViewModels
 
                 if (_config.AutoSfx)
                 {
-                    BusyMessage = "Создание самораспаковывающегося архива (SFX)...";
+                    BusyMessage = "Создание SFX...";
                     await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config);
                 }
-
-                AddLog("Готово.");
-            }
-            catch (Exception ex)
-            {
-                AddLog($"Ошибка при скачивании: {ex.Message}");
-                _logger.Error(ex, "Error downloading");
+                AddLog("Загрузка фиксов завершена.");
             }
             finally
             {
-                IsBusy = false;
+                if (!internalCall) IsBusy = false;
             }
         }
 
         private async Task CheckDistrosAsync()
         {
             if (IsBusy) return;
-            BusyMessage = "Проверка дистрибутивов OE...";
             IsBusy = true;
-
             try
             {
+                BusyMessage = "Проверка дистрибутивов OE...";
                 LatestDistro = await _distroService.GetLatestDistroAsync(DistroOeUrl);
-
-                if (LatestDistro != null)
-                {
-                    if (AutoDownloadDistro)
-                    {
-                        string localPath = Path.Combine(DistroDownloadPath, LatestDistro.FileName);
-                        if (!File.Exists(localPath))
-                        {
-                            IsBusy = false;
-                            await DownloadLatestDistroAsync();
-                        }
-                    }
-                }
             }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error checking OE distro");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            finally { IsBusy = false; }
         }
 
         private async Task CheckAisPromAsync()
         {
             if (IsBusy) return;
-            BusyMessage = "Проверка дистрибутивов Пром...";
             IsBusy = true;
-
             try
             {
+                BusyMessage = "Проверка дистрибутивов Пром...";
                 LatestAisProm = await _distroService.GetLatestDistroAsync(DistroPromUrl);
-
-                if (LatestAisProm != null)
-                {
-                    if (AutoDownloadAisNalog3)
-                    {
-                        string localPath = Path.Combine(AisNalog3DownloadPath, LatestAisProm.FileName);
-                        if (!File.Exists(localPath))
-                        {
-                            IsBusy = false;
-                            await DownloadLatestAisPromAsync();
-                        }
-                    }
-                }
             }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error checking PROM distro");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            finally { IsBusy = false; }
         }
 
-        private async Task DownloadLatestDistroAsync()
+        private async Task DownloadLatestDistroAsync(bool internalCall = false)
         {
-            if (LatestDistro == null || IsBusy) return;
+            if (LatestDistro == null) return;
+            if (!internalCall && IsBusy) return;
 
-            string targetPath = DistroDownloadPath;
-            if (string.IsNullOrWhiteSpace(targetPath))
-            {
-                AddLog("Ошибка: Не указан путь для OE в настройках.");
-                return;
-            }
-
-            BusyMessage = $"Загрузка OE: {LatestDistro.Version}";
-            IsBusy = true;
+            if (!internalCall) IsBusy = true;
+            _oeCts = new System.Threading.CancellationTokenSource();
             try
             {
+                BusyMessage = $"Загрузка OE: {LatestDistro.Version}";
                 LatestDistro.IsDownloading = true;
                 LatestDistro.DownloadStatus = "ЗАГРУЗКА";
+                LatestDistro.Progress = 0;
 
                 var progress = new Progress<int>(p => { if (LatestDistro != null) LatestDistro.Progress = p; });
-                await _distroService.DownloadDistroAsync(LatestDistro, targetPath, progress);
+                await _distroService.DownloadDistroAsync(LatestDistro, DistroDownloadPath, progress, _oeCts.Token);
 
                 LatestDistro.DownloadStatus = "ГОТОВО";
                 AddLog($"OE скачан: {LatestDistro.FileName}");
+            }
+            catch (OperationCanceledException)
+            {
+                AddLog("Загрузка OE отменена пользователем.");
+                if (LatestDistro != null) LatestDistro.DownloadStatus = "ОТМЕНЕНО";
             }
             catch (Exception ex)
             {
@@ -609,33 +574,37 @@ namespace AISManager.ViewModels
             finally
             {
                 if (LatestDistro != null) LatestDistro.IsDownloading = false;
-                IsBusy = false;
+                if (!internalCall) IsBusy = false;
+                _oeCts.Dispose();
+                _oeCts = null;
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
-        private async Task DownloadLatestAisPromAsync()
+        private async Task DownloadLatestAisPromAsync(bool internalCall = false)
         {
-            if (LatestAisProm == null || IsBusy) return;
+            if (LatestAisProm == null) return;
+            if (!internalCall && IsBusy) return;
 
-            string targetPath = AisNalog3DownloadPath;
-            if (string.IsNullOrWhiteSpace(targetPath))
-            {
-                AddLog("Ошибка: Не указан путь для Пром в настройках.");
-                return;
-            }
-
-            BusyMessage = $"Загрузка Пром: {LatestAisProm.Version}";
-            IsBusy = true;
+            if (!internalCall) IsBusy = true;
+            _promCts = new System.Threading.CancellationTokenSource();
             try
             {
+                BusyMessage = $"Загрузка Пром: {LatestAisProm.Version}";
                 LatestAisProm.IsDownloading = true;
                 LatestAisProm.DownloadStatus = "ЗАГРУЗКА";
+                LatestAisProm.Progress = 0;
 
                 var progress = new Progress<int>(p => { if (LatestAisProm != null) LatestAisProm.Progress = p; });
-                await _distroService.DownloadDistroAsync(LatestAisProm, targetPath, progress);
+                await _distroService.DownloadDistroAsync(LatestAisProm, AisNalog3DownloadPath, progress, _promCts.Token);
 
                 LatestAisProm.DownloadStatus = "ГОТОВО";
                 AddLog($"АИС Налог 3 (Пром) скачан: {LatestAisProm.FileName}");
+            }
+            catch (OperationCanceledException)
+            {
+                AddLog("Загрузка Пром отменена пользователем.");
+                if (LatestAisProm != null) LatestAisProm.DownloadStatus = "ОТМЕНЕНО";
             }
             catch (Exception ex)
             {
@@ -645,7 +614,10 @@ namespace AISManager.ViewModels
             finally
             {
                 if (LatestAisProm != null) LatestAisProm.IsDownloading = false;
-                IsBusy = false;
+                if (!internalCall) IsBusy = false;
+                _promCts.Dispose();
+                _promCts = null;
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 

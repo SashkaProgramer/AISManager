@@ -12,7 +12,7 @@ namespace AISManager.Services
     public interface IDistroService
     {
         Task<DistroInfo?> GetLatestDistroAsync(string ftpUrl);
-        Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null);
+        Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null, System.Threading.CancellationToken ct = default);
         Action<string>? OnLog { get; set; }
     }
 
@@ -96,7 +96,7 @@ namespace AISManager.Services
             }
         }
 
-        public async Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null)
+        public async Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null, System.Threading.CancellationToken ct = default)
         {
             try
             {
@@ -140,9 +140,10 @@ namespace AISManager.Services
                 int bytesRead;
                 long totalBytesRead = 0;
 
-                while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
                 {
-                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                    ct.ThrowIfCancellationRequested();
+                    await fileStream.WriteAsync(buffer, 0, bytesRead, ct);
                     totalBytesRead += bytesRead;
 
                     if (fileSize > 0)
@@ -153,6 +154,11 @@ namespace AISManager.Services
                 }
 
                 _logger.Information("Download completed: {FileName}", distro.FileName);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.Warning("Download cancelled for {FileName}", distro.FileName);
+                throw;
             }
             catch (Exception ex)
             {

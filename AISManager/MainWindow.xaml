@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AISManager"
+        xmlns:infra="clr-namespace:AISManager.Infrastructure"
         mc:Ignorable="d"
         Title="AIS Update Manager"
         Height="700"
@@ -16,6 +17,7 @@
         Closing="Window_Closing">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <infra:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
         <!-- Стили кнопок -->
         <Style x:Key="MenuButtonStyle"
                TargetType="Button">
@@ -415,7 +417,22 @@
                                         <TextBlock Text="{Binding LatestDistro.DownloadStatus}" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                         <ProgressBar Value="{Binding LatestDistro.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
                                                      Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        <Button Content="⬇️ Скачать OE (.rar)" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding DownloadDistroCommand}" HorizontalAlignment="Left" Margin="0,15,0,0"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
+                                            <Button Content="⬇️ Скачать OE (.rar)" 
+                                                    Style="{StaticResource PrimaryButtonStyle}" 
+                                                    Command="{Binding DownloadDistroCommand}" 
+                                                    Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                            <Button Content="❌ Отменить загрузку" 
+                                                    Command="{Binding DataContext.CancelDownloadOeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Padding="15,8" Background="#E53E3E" Foreground="White" BorderThickness="0">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="6"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                            </Button>
+                                        </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -451,7 +468,22 @@
                                         <TextBlock Text="{Binding LatestAisProm.DownloadStatus}" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                         <ProgressBar Value="{Binding LatestAisProm.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
                                                      Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        <Button Content="⬇️ Скачать Пром (.rar)" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding DownloadAisPromCommand}" HorizontalAlignment="Left" Margin="0,15,0,0"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
+                                            <Button Content="⬇️ Скачать Пром (.rar)" 
+                                                    Style="{StaticResource PrimaryButtonStyle}" 
+                                                    Command="{Binding DownloadAisPromCommand}" 
+                                                    Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                            <Button Content="❌ Отменить загрузку" 
+                                                    Command="{Binding DataContext.CancelDownloadPromCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Padding="15,8" Background="#E53E3E" Foreground="White" BorderThickness="0">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="6"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                            </Button>
+                                        </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
