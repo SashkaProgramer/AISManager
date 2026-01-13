@@ -59,6 +59,12 @@ namespace AISManager
             {
                 ViewDistros.Visibility = Visibility.Visible;
                 BtnDistros.Style = (Style)FindResource("ActiveMenuButtonStyle");
+
+                // Сбрасываем уведомление о новых загрузках
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.MarkDistrosAsRead();
+                }
             }
         }
 

@@ -222,10 +222,26 @@
                         Content="📦  Пакеты исправлений"
                         Style="{StaticResource ActiveMenuButtonStyle}"
                         Click="MenuButton_Click" />
-                <Button x:Name="BtnDistros"
-                        Content="💿  Дистрибутивы ПО"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Click="MenuButton_Click" />
+                <Grid>
+                    <Button x:Name="BtnDistros"
+                            Content="💿  Дистрибутивы ПО"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Click="MenuButton_Click" />
+                    <!-- Зеленый кружочек (индикатор завершенной загрузки) -->
+                    <Border Background="#48BB78" 
+                            Width="8" 
+                            Height="8" 
+                            CornerRadius="4" 
+                            HorizontalAlignment="Right" 
+                            VerticalAlignment="Center" 
+                            Margin="0,0,15,0"
+                            IsHitTestVisible="False"
+                            Visibility="{Binding HasNewDistroNotification, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="4" ShadowDepth="0" Color="#48BB78" Opacity="0.6"/>
+                        </Border.Effect>
+                    </Border>
+                </Grid>
                 <Button x:Name="BtnSettings"
                         Content="⚙️  Настройки"
                         Style="{StaticResource MenuButtonStyle}"
@@ -440,16 +456,39 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <!-- КНОПКА (ВСЕГДА В САМОМ НИЗУ СВОЕЙ СЕТКИ) -->
-                    <Button Grid.Row="2"
-                            x:Name="BtnProcess"
-                            Content="⬇️ Скачать и создать FIX_№.exe"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding DownloadCommand}"
-                            HorizontalAlignment="Right"
-                            Height="40"
-                            Width="260"
-                            Margin="0,15,0,0" />
+                    <!-- КНОПКИ УПРАВЛЕНИЯ -->
+                    <StackPanel Grid.Row="2" 
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                Margin="0,15,0,0">
+                        
+                        <!-- Кнопка отмены (видна только при загрузке) -->
+                        <Button x:Name="BtnCancelFixes"
+                                Content="❌ Отменить загрузку"
+                                Command="{Binding CancelDownloadFixesCommand}"
+                                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Margin="0,0,10,0"
+                                Padding="15,8" 
+                                Background="#E53E3E" 
+                                Foreground="White" 
+                                BorderThickness="0"
+                                Height="40">
+                             <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+
+                        <!-- Кнопка скачивания (скрыта при загрузке) -->
+                        <Button x:Name="BtnProcess"
+                                Content="⬇️ Скачать и создать FIX_№.exe"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding DownloadCommand}"
+                                Visibility="{Binding IsBusy, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                Height="40"
+                                Width="260" />
+                    </StackPanel>
                 </Grid>
                 <!-- VIEW: DISTROS -->
                 <Grid x:Name="ViewDistros" Visibility="Collapsed" VerticalAlignment="Stretch">

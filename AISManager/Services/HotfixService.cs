@@ -66,8 +66,8 @@ namespace AISManager.Services
 
                         hotfixesTemp.Add(new HotfixInfo
                         {
-                            Name = fileName,       
-                            Url = fullyDecodedUrl, 
+                            Name = fileName,
+                            Url = fullyDecodedUrl,
                             Version = version
                         });
                     }
@@ -92,7 +92,7 @@ namespace AISManager.Services
             }
         }
 
-        public async Task DownloadHotfixAsync(HotfixInfo hotfix, string downloadPath, IProgress<int> progress)
+        public async Task DownloadHotfixAsync(HotfixInfo hotfix, string downloadPath, IProgress<int> progress, System.Threading.CancellationToken ct)
         {
             if (hotfix == null || string.IsNullOrEmpty(hotfix.Url) || string.IsNullOrEmpty(hotfix.Name))
             {
@@ -117,30 +117,30 @@ namespace AISManager.Services
                 {
                     Scheme = new Uri(BaseDownloadUrl).Scheme,
                     Host = new Uri(BaseDownloadUrl).Host,
-                    Path = pathForUriBuilder 
+                    Path = pathForUriBuilder
                 };
                 string finalUrlToRequest = uriBuilder.Uri.AbsoluteUri;
 
                 s_logger.Information("[DownloadHotfixAsync] Начало скачивания хотфикса {HotfixName} по URL: {FinalUrl}", hotfix.Name, finalUrlToRequest);
 
-                var response = await _httpClient.GetAsync(finalUrlToRequest, HttpCompletionOption.ResponseHeadersRead);
+                var response = await _httpClient.GetAsync(finalUrlToRequest, HttpCompletionOption.ResponseHeadersRead, ct);
                 response.EnsureSuccessStatusCode();
 
                 var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                var filePath = Path.Combine(downloadPath, hotfix.Name); 
-                
+                var filePath = Path.Combine(downloadPath, hotfix.Name);
+
                 // Ensure directory exists
                 Directory.CreateDirectory(downloadPath);
 
                 using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
-                using (var contentStream = await response.Content.ReadAsStreamAsync())
+                using (var contentStream = await response.Content.ReadAsStreamAsync(ct))
                 {
                     var buffer = new byte[8192];
                     var totalBytesRead = 0L;
                     int bytesRead;
-                    while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
                     {
-                        await fileStream.WriteAsync(buffer, 0, bytesRead);
+                        await fileStream.WriteAsync(buffer, 0, bytesRead, ct);
                         totalBytesRead += bytesRead;
                         if (totalBytes > 0)
                         {
@@ -173,7 +173,7 @@ namespace AISManager.Services
 
                 if (!pathForUriBuilder.StartsWith("http") && !pathForUriBuilder.StartsWith("/"))
                 {
-                     pathForUriBuilder = "/" + pathForUriBuilder;
+                    pathForUriBuilder = "/" + pathForUriBuilder;
                 }
 
                 var uriBuilder = new UriBuilder
@@ -182,7 +182,7 @@ namespace AISManager.Services
                     Host = new Uri(BaseDownloadUrl).Host,
                     Path = pathForUriBuilder
                 };
-                
+
                 var request = new HttpRequestMessage(HttpMethod.Head, uriBuilder.Uri.AbsoluteUri);
                 var response = await _httpClient.SendAsync(request);
                 return response.IsSuccessStatusCode;

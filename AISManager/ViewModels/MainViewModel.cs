@@ -32,6 +32,8 @@ namespace AISManager.ViewModels
         private string _lastCheckTimeText = "Не проверялось";
         private System.Threading.CancellationTokenSource? _oeCts;
         private System.Threading.CancellationTokenSource? _promCts;
+        private System.Threading.CancellationTokenSource? _fixesCts;
+        private bool _hasNewDistroNotification;
         private const string DistroOeUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/OE/";
         private const string DistroPromUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/AisNalog3_PROM/";
 
@@ -42,7 +44,9 @@ namespace AISManager.ViewModels
             set
             {
                 if (SetProperty(ref _latestDistro, value))
+                {
                     CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
@@ -53,7 +57,9 @@ namespace AISManager.ViewModels
             set
             {
                 if (SetProperty(ref _latestAisProm, value))
+                {
                     CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
@@ -285,6 +291,17 @@ namespace AISManager.ViewModels
             set => SetProperty(ref _hasUnreadLogs, value);
         }
 
+        public bool HasNewDistroNotification
+        {
+            get => _hasNewDistroNotification;
+            set => SetProperty(ref _hasNewDistroNotification, value);
+        }
+
+        public void MarkDistrosAsRead()
+        {
+            HasNewDistroNotification = false;
+        }
+
         public GridLength LogHeight
         {
             get => new GridLength(_config.LogHeight > 0 ? _config.LogHeight : 150, GridUnitType.Pixel);
@@ -315,9 +332,11 @@ namespace AISManager.ViewModels
 
         public ICommand CheckAisPromCommand { get; }
         public ICommand DownloadAisPromCommand { get; }
+        public ICommand CancelDownloadFixesCommand { get; }
         public ICommand CancelDownloadOeCommand { get; }
         public ICommand CancelDownloadPromCommand { get; }
         public ICommand SelectAisPromDownloadPathCommand { get; }
+
 
         public MainViewModel()
         {
@@ -335,6 +354,7 @@ namespace AISManager.ViewModels
             CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync());
             DownloadCommand = new RelayCommand(async _ => await DownloadSelectedAsync(), _ => !IsBusy);
             ManualDownloadCommand = new RelayCommand(_ => System.Windows.MessageBox.Show("Функция ручного скачивания пока не реализована."));
+            CancelDownloadFixesCommand = new RelayCommand(_ => _fixesCts?.Cancel(), _ => _fixesCts != null);
 
             SelectDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для загрузки архивов", path => DownloadPath = path));
             SelectSfxOutputPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для FIX_№.exe", path => SfxOutputPath = path));
@@ -639,6 +659,7 @@ namespace AISManager.ViewModels
             }
 
             if (!internalCall) IsBusy = true;
+            _fixesCts = new System.Threading.CancellationTokenSource();
             try
             {
                 BusyMessage = "Загрузка и обработка пакетов...";
@@ -655,12 +676,32 @@ namespace AISManager.ViewModels
                     file.StatusFgColor = "#D69E2E";
 
                     var progress = new Progress<int>(p => { file.ProgressValue = p; file.ProgressText = $"{p}%"; });
-                    await _hotfixService.DownloadHotfixAsync(file.HotfixData, downloadPath, progress);
 
-                    file.StatusText = "ГОТОВО";
-                    file.StatusBgColor = "#48BB78";
-                    file.StatusFgColor = "White";
-                    file.IsProcessing = false;
+                    try
+                    {
+                        await _hotfixService.DownloadHotfixAsync(file.HotfixData, downloadPath, progress, _fixesCts.Token);
+
+                        file.StatusText = "ГОТОВО";
+                        file.StatusBgColor = "#48BB78";
+                        file.StatusFgColor = "White";
+                        file.IsProcessing = false;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        file.StatusText = "ОТМЕНЕНО";
+                        file.StatusBgColor = "#E2E8F0";
+                        file.StatusFgColor = "#4A5568";
+                        file.IsProcessing = false;
+                        throw; // Прерываем весь цикл загрузки
+                    }
+                    catch (Exception ex)
+                    {
+                        file.StatusText = "ОШИБКА";
+                        file.StatusBgColor = "#FFF5F5";
+                        file.StatusFgColor = "#C53030";
+                        file.IsProcessing = false;
+                        AddLog($"Ошибка при скачивании {file.FileName}: {ex.Message}");
+                    }
                 }
 
                 if (_config.AutoSfx)
@@ -670,9 +711,15 @@ namespace AISManager.ViewModels
                 }
                 AddLog("Загрузка фиксов завершена.");
             }
+            catch (OperationCanceledException)
+            {
+                AddLog("Загрузка фиксов отменена пользователем.");
+            }
             finally
             {
                 if (!internalCall) IsBusy = false;
+                _fixesCts.Dispose();
+                _fixesCts = null;
             }
         }
 
@@ -723,6 +770,7 @@ namespace AISManager.ViewModels
                 await _distroService.DownloadDistroAsync(LatestDistro, DistroDownloadPath, progress, _oeCts.Token);
 
                 LatestDistro.DownloadStatus = "ГОТОВО";
+                HasNewDistroNotification = true;
                 AddLog($"OE скачан: {LatestDistro.FileName}");
             }
             catch (OperationCanceledException)
@@ -768,6 +816,7 @@ namespace AISManager.ViewModels
                 await _distroService.DownloadDistroAsync(LatestAisProm, AisNalog3DownloadPath, progress, _promCts.Token);
 
                 LatestAisProm.DownloadStatus = "ГОТОВО";
+                HasNewDistroNotification = true;
                 AddLog($"АИС Налог 3 (Пром) скачан: {LatestAisProm.FileName}");
             }
             catch (OperationCanceledException)
