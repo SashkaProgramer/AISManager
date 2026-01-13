@@ -25,6 +25,11 @@ namespace AISManager.ViewModels
         private string _logOutput = "";
         private bool _isBusy;
         private System.Threading.Timer? _autoCheckTimer;
+        private System.Threading.Timer? _statusUpdateTimer;
+        private DateTime? _lastCheckTime;
+        private string _autoCheckStatusText = "Система готова";
+        private string _autoCheckStatusColor = "#48BB78";
+        private string _lastCheckTimeText = "Не проверялось";
         private System.Threading.CancellationTokenSource? _oeCts;
         private System.Threading.CancellationTokenSource? _promCts;
         private const string DistroOeUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/OE/";
@@ -81,6 +86,43 @@ namespace AISManager.ViewModels
         {
             get => _busyMessage;
             set => SetProperty(ref _busyMessage, value);
+        }
+
+        public string AutoCheckStatusText
+        {
+            get => _autoCheckStatusText;
+            set => SetProperty(ref _autoCheckStatusText, value);
+        }
+
+        public string AutoCheckStatusColor
+        {
+            get => _autoCheckStatusColor;
+            set => SetProperty(ref _autoCheckStatusColor, value);
+        }
+
+        public string LastCheckTimeText
+        {
+            get => _lastCheckTimeText;
+            set => SetProperty(ref _lastCheckTimeText, value);
+        }
+
+        public bool IsAutoCheckEnabled
+        {
+            get => _config.IsAutoCheckEnabled;
+            set
+            {
+                if (_config.IsAutoCheckEnabled != value)
+                {
+                    _config.IsAutoCheckEnabled = value;
+                    _config.Save();
+                    if (value) StartAutoCheck();
+                    else StopAutoCheck();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsFullAuto));
+                    OnPropertyChanged(nameof(AutoCheckStatusText));
+                    OnPropertyChanged(nameof(AutoCheckStatusColor));
+                }
+            }
         }
 
         public bool IsFullAuto
@@ -145,8 +187,9 @@ namespace AISManager.ViewModels
             }
         }
 
-        public string AutoCheckStatusText => IsFullAuto ? "Автопроверка активна" : "Автопроверка выключена";
-        public string AutoCheckStatusColor => IsFullAuto ? "#48BB78" : "#718096";
+        // The original AutoCheckStatusText and AutoCheckStatusColor properties are now replaced by the new settable properties above.
+        // public string AutoCheckStatusText => IsFullAuto ? "Автопроверка активна" : "Автопроверка выключена";
+        // public string AutoCheckStatusColor => IsFullAuto ? "#48BB78" : "#718096";
 
 
         public string DownloadPath
@@ -302,6 +345,10 @@ namespace AISManager.ViewModels
             CancelDownloadPromCommand = new RelayCommand(_ => _promCts?.Cancel(), _ => _promCts != null);
             SelectAisPromDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для установки АИС Налог 3 (Пром)", path => AisNalog3DownloadPath = path));
 
+            _statusUpdateTimer = new System.Threading.Timer(_ =>
+                System.Windows.Application.Current.Dispatcher.Invoke(UpdateLastCheckText),
+                null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+
             Updates.CollectionChanged += (s, e) =>
             {
                 if (e.NewItems != null)
@@ -312,10 +359,27 @@ namespace AISManager.ViewModels
                 OnPropertyChanged(nameof(IsAllSelected));
             };
 
-            if (IsFullAuto) StartAutoCheck();
+            if (IsAutoCheckEnabled) StartAutoCheck(); // Changed from IsFullAuto to IsAutoCheckEnabled
 
             // Initial check
             Task.Run(async () => await CheckAllAsync());
+        }
+
+        private void UpdateLastCheckText()
+        {
+            if (!_lastCheckTime.HasValue)
+            {
+                LastCheckTimeText = "Не проверялось";
+                return;
+            }
+
+            var diff = DateTime.Now - _lastCheckTime.Value;
+            if (diff.TotalSeconds < 60)
+                LastCheckTimeText = "Обновлено: только что";
+            else if (diff.TotalMinutes < 60)
+                LastCheckTimeText = $"Обновлено: {(int)diff.TotalMinutes} мин. назад";
+            else
+                LastCheckTimeText = $"Обновлено: {_lastCheckTime.Value:HH:mm}";
         }
 
         private void OpenAppDataFolder()
@@ -355,7 +419,7 @@ namespace AISManager.ViewModels
         {
             using var dialog = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description = "Выберите место (диск или папку), где будет создана папка AIS_Files со всей структурой",
+                Description = "Выберите место (диск или папка), где будет создана папка AIS_Files со всей структурой",
                 UseDescriptionForTitle = true
             };
 
@@ -527,11 +591,18 @@ namespace AISManager.ViewModels
                         await DownloadLatestAisPromAsync(internalCall: true);
                     }
                 }
+
+                _lastCheckTime = DateTime.Now;
+                AutoCheckStatusText = "Система обновлена";
+                AutoCheckStatusColor = "#48BB78";
+                UpdateLastCheckText();
             }
             catch (Exception ex)
             {
                 AddLog($"Ошибка при общей проверке: {ex.Message}");
                 _logger.Error(ex, "Error during CheckAllAsync");
+                AutoCheckStatusText = "Ошибка проверки";
+                AutoCheckStatusColor = "#E53E3E";
             }
             finally
             {

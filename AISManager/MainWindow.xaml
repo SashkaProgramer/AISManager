@@ -239,7 +239,7 @@
                                        Foreground="{Binding AutoCheckStatusColor}"
                                        FontSize="12"
                                        FontWeight="SemiBold" />
-                            <TextBlock Text="Обновлено: только что"
+                            <TextBlock Text="{Binding LastCheckTimeText}"
                                        Foreground="#A0AEC0"
                                        FontSize="10" />
                         </StackPanel>
@@ -536,7 +536,7 @@
                                     <CheckBox IsChecked="{Binding AutoDownload}"
                                               Content="Автоматически скачивать новые фиксы"
                                               Margin="0,0,0,5" />
-                                    <TextBlock Text="При нахождении новых обновлений в КБ, они будут скачаны автоматически." 
+                                    <TextBlock Text="При нахождении новых обновлений, они будут скачаны автоматически." 
                                                FontSize="11" Foreground="#718096" Margin="25,0,0,0"/>
                                 </StackPanel>
                             </Border>
