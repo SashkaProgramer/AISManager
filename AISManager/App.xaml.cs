@@ -9,13 +9,20 @@ namespace AISManager
         {
             base.OnStartup(e);
 
+            var logPath = System.IO.Path.Combine(AISManager.AppData.AppPath.LogsPath, "log.txt");
+            var logDir = AISManager.AppData.AppPath.LogsPath;
+            if (!System.IO.Directory.Exists(logDir))
+            {
+                System.IO.Directory.CreateDirectory(logDir);
+            }
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.File(System.IO.Path.Combine(AISManager.AppData.AppPath.LogsPath, "log.txt"), rollingInterval: RollingInterval.Day)
+                .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
                 .WriteTo.Debug()
                 .CreateLogger();
 
-            Log.Information("Application Starting...");
+            Log.Information("Application Starting... Log file: {LogPath}", logPath);
 
             if (CheckDownloadPath())
             {
@@ -32,16 +39,16 @@ namespace AISManager
         {
             var config = AISManager.AppData.Configs.AppConfig.Instance;
             config.Load();
-            
+
             // Проверяем, пустой ли путь или указывает на несуществующую папку
             if (string.IsNullOrWhiteSpace(config.DownloadPath) || !System.IO.Directory.Exists(config.DownloadPath))
             {
                 while (string.IsNullOrWhiteSpace(config.DownloadPath) || !System.IO.Directory.Exists(config.DownloadPath))
                 {
                     var result = System.Windows.MessageBox.Show(
-                        "Необходимо указать корректный путь к папке для загрузки фиксов.\n\nУказать сейчас?", 
-                        "Первоначальная настройка", 
-                        MessageBoxButton.YesNo, 
+                        "Необходимо указать корректный путь к папке для загрузки фиксов.\n\nУказать сейчас?",
+                        "Первоначальная настройка",
+                        MessageBoxButton.YesNo,
                         MessageBoxImage.Warning);
 
                     if (result == MessageBoxResult.Yes)
@@ -50,7 +57,7 @@ namespace AISManager
                         {
                             dialog.Description = "Выберите папку для загрузки фиксов";
                             dialog.UseDescriptionForTitle = true;
-                            
+
                             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                             {
                                 config.DownloadPath = dialog.SelectedPath;

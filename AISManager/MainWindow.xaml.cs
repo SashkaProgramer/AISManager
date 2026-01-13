@@ -48,5 +48,22 @@ namespace AISManager
                 textBox.ScrollToEnd();
             }
         }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel && viewModel.IsBusy)
+            {
+                var result = System.Windows.MessageBox.Show(
+                    $"Сейчас выполняется: {viewModel.BusyMessage}\n\nВы уверены, что хотите закрыть приложение? Это может прервать текущую операцию.",
+                    "Внимание: работа не завершена",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                }
+            }
+        }
     }
 }

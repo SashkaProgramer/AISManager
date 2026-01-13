@@ -10,7 +10,8 @@
         Height="700"
         Width="950"
         WindowStartupLocation="CenterScreen"
-        Background="#F3F4F6">
+        Background="#F3F4F6"
+        Closing="Window_Closing">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <!-- Стили кнопок -->
@@ -426,18 +427,44 @@
                                        FontSize="18"
                                        FontWeight="Bold"
                                        Margin="0,0,0,20" />
-                            <CheckBox IsChecked="{Binding IsFullAuto}"
-                                      Content="Полная автоматизация (проверка обновлений и создание SFX)"
-                                      Margin="0,0,0,10" />
-                            <CheckBox IsChecked="{Binding AutoDownload}"
-                                      Content="Автоматически скачивать новые фиксы"
-                                      Margin="0,0,0,10" />
-                             <CheckBox IsChecked="{Binding AutoDownloadDistro}"
-                                       Content="Автоматически скачивать новый дистрибутив (OE)"
-                                       Margin="0,0,0,10" />
-                             <CheckBox IsChecked="{Binding AutoDownloadAisNalog3}"
-                                       Content="Автоматически скачивать АИС Налог 3 (Пром)"
-                                       Margin="0,0,0,20" />
+                            <!-- БЛОК: ПАКЕТЫ ИСПРАВЛЕНИЙ -->
+                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                        <TextBlock Text="📦" FontSize="16" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Автоматизация фиксов" FontSize="15" FontWeight="Bold" Foreground="#2D3748"/>
+                                    </StackPanel>
+                                    
+                                    <CheckBox IsChecked="{Binding IsFullAuto}"
+                                              Content="Полная автоматизация (проверка обновлений и создание SFX)"
+                                              Margin="0,0,0,12" />
+                                    <CheckBox IsChecked="{Binding AutoDownload}"
+                                              Content="Автоматически скачивать новые фиксы"
+                                              Margin="0,0,0,5" />
+                                    <TextBlock Text="При нахождении новых обновлений в КБ, они будут скачаны автоматически." 
+                                               FontSize="11" Foreground="#718096" Margin="25,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- БЛОК: ДИСТРИБУТИВЫ -->
+                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                        <TextBlock Text="💿" FontSize="16" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Автозагрузка дистрибутивов (FTP)" FontSize="15" FontWeight="Bold" Foreground="#2D3748"/>
+                                    </StackPanel>
+
+                                    <CheckBox IsChecked="{Binding AutoDownloadDistro}"
+                                              Content="Автоматически скачивать новый дистрибутив (OE)"
+                                              Margin="0,0,0,12" />
+                                    
+                                    <CheckBox IsChecked="{Binding AutoDownloadAisNalog3}"
+                                              Content="Автоматически скачивать АИС Налог 3 (Пром)"
+                                              Margin="0,0,0,5" />
+                                    <TextBlock Text="Приложение будет проверять наличие новых версий на FTP и скачивать их в указанные ниже папки." 
+                                               FontSize="11" Foreground="#718096" Margin="25,0,0,0"/>
+                                </StackPanel>
+                            </Border>
                              <TextBlock Text="Папка выгрузки (архивы):"
                                         Foreground="#718096"
                                         Margin="0,0,0,5" />

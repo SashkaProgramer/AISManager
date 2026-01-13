@@ -74,6 +74,13 @@ namespace AISManager.ViewModels
             }
         }
 
+        private string _busyMessage = "";
+        public string BusyMessage
+        {
+            get => _busyMessage;
+            set => SetProperty(ref _busyMessage, value);
+        }
+
         public bool IsFullAuto
         {
             get => _config.IsAutoCheckEnabled && _config.AutoSfx && _config.AutoDownload;
@@ -381,6 +388,7 @@ namespace AISManager.ViewModels
         private async Task CheckUpdatesAsync()
         {
             if (IsBusy) return;
+            BusyMessage = "Проверка обновлений...";
             IsBusy = true;
 
             try
@@ -441,6 +449,7 @@ namespace AISManager.ViewModels
                 return;
             }
 
+            BusyMessage = "Загрузка и обработка пакетов...";
             IsBusy = true;
             string downloadPath = DownloadPath;
             if (!Directory.Exists(downloadPath))
@@ -485,6 +494,7 @@ namespace AISManager.ViewModels
 
                 if (_config.AutoSfx)
                 {
+                    BusyMessage = "Создание самораспаковывающегося архива (SFX)...";
                     await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config);
                 }
 
@@ -504,6 +514,7 @@ namespace AISManager.ViewModels
         private async Task CheckDistrosAsync()
         {
             if (IsBusy) return;
+            BusyMessage = "Проверка дистрибутивов OE...";
             IsBusy = true;
 
             try
@@ -536,6 +547,7 @@ namespace AISManager.ViewModels
         private async Task CheckAisPromAsync()
         {
             if (IsBusy) return;
+            BusyMessage = "Проверка дистрибутивов Пром...";
             IsBusy = true;
 
             try
@@ -576,6 +588,7 @@ namespace AISManager.ViewModels
                 return;
             }
 
+            BusyMessage = $"Загрузка OE: {LatestDistro.Version}";
             IsBusy = true;
             try
             {
@@ -611,6 +624,7 @@ namespace AISManager.ViewModels
                 return;
             }
 
+            BusyMessage = $"Загрузка Пром: {LatestAisProm.Version}";
             IsBusy = true;
             try
             {
