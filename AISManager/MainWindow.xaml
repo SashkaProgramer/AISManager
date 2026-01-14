@@ -14,7 +14,9 @@
         MinHeight="700"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowGradient}"
-        Closing="Window_Closing">
+        Closing="Window_Closing"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
     <Window.Resources>
         <!-- MODERN PALETTE -->
         <SolidColorBrush x:Key="PrimaryBlue" Color="#3B82F6" />
@@ -352,8 +354,10 @@
                                     Margin="0,8,0,0">
                                 <TextBlock Text="RELEASE PROTOTYPE" 
                                            Foreground="White" 
-                                           FontSize="9" 
-                                           FontWeight="Black" />
+                                           FontSize="10" 
+                                           FontWeight="ExtraBold"
+                                           TextOptions.TextFormattingMode="Display"
+                                           TextOptions.TextRenderingMode="ClearType" />
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="10" Color="#EF4444" Opacity="0.4" ShadowDepth="0"/>
                                 </Border.Effect>
