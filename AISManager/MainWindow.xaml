@@ -731,7 +731,7 @@
                         <!-- Кнопка отмены -->
                         <Button x:Name="BtnCancelFixes"
                                 Command="{Binding CancelDownloadFixesCommand}"
-                                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Visibility="{Binding IsFixesBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Margin="0,0,12,0"
                                 Padding="18,10" 
                                 Background="#FEF2F2" 
@@ -754,7 +754,7 @@
                         <Button x:Name="BtnProcess"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding DownloadCommand}"
-                                Visibility="{Binding IsBusy, Converter={StaticResource InvBoolToVis}}"
+                                Visibility="{Binding IsFixesBusy, Converter={StaticResource InvBoolToVis}}"
                                 Height="42"
                                 Width="280">
                             <StackPanel Orientation="Horizontal">

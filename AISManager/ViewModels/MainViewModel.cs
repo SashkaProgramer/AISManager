@@ -87,6 +87,17 @@ namespace AISManager.ViewModels
             }
         }
 
+        private bool _isFixesBusy;
+        public bool IsFixesBusy
+        {
+            get => _isFixesBusy;
+            set
+            {
+                if (SetProperty(ref _isFixesBusy, value))
+                    CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         private string _busyMessage = "";
         public string BusyMessage
         {
@@ -735,6 +746,7 @@ namespace AISManager.ViewModels
             }
 
             if (!internalCall) IsBusy = true;
+            IsFixesBusy = true;
             CancelActionText = "Отменить загрузку";
             _fixesCts = new System.Threading.CancellationTokenSource();
             try
@@ -820,7 +832,8 @@ namespace AISManager.ViewModels
             finally
             {
                 if (!internalCall) IsBusy = false;
-                _fixesCts.Dispose();
+                IsFixesBusy = false;
+                _fixesCts?.Dispose();
                 _fixesCts = null;
             }
         }
