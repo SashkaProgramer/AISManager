@@ -13,100 +13,166 @@
         MinWidth="950"
         MinHeight="700"
         WindowStartupLocation="CenterScreen"
-        Background="#F3F4F6"
+        Background="{DynamicResource WindowGradient}"
         Closing="Window_Closing">
     <Window.Resources>
+        <!-- MODERN PALETTE -->
+        <SolidColorBrush x:Key="PrimaryBlue" Color="#3B82F6" />
+        <SolidColorBrush x:Key="PrimaryBlueHover" Color="#2563EB" />
+        <LinearGradientBrush x:Key="SidebarGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#1E293B" Offset="0" />
+            <GradientStop Color="#0F172A" Offset="0.5" />
+            <GradientStop Color="#020617" Offset="1" />
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="SidebarItemHover" Color="#334155" />
+        <SolidColorBrush x:Key="SidebarItemActive" Color="#3B82F6" />
+        <SolidColorBrush x:Key="SidebarText" Color="#94A3B8" />
+        <SolidColorBrush x:Key="SidebarTextActive" Color="#FFFFFF" />
+        <LinearGradientBrush x:Key="WindowGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFFFFF" Offset="0" />
+            <GradientStop Color="#E0E7FF" Offset="1" />
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="WindowBg" Color="#F1F5F9" />
+        <SolidColorBrush x:Key="BorderLight" Color="#E2E8F0" />
+        <SolidColorBrush x:Key="TextDark" Color="#1E293B" />
+        <SolidColorBrush x:Key="TextMuted" Color="#475569" />
+        
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="25" ShadowDepth="5" Color="#000000" Opacity="0.12"/>
+        <DropShadowEffect x:Key="ButtonShadow" BlurRadius="10" ShadowDepth="2" Color="#3B82F6" Opacity="0.2"/>
+        
+        <!-- ICON GEOMETRIES -->
+        <Geometry x:Key="IconBox">M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.94 12.21 22 12 22C11.79 22 11.59 21.94 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.06 11.79 2 12 2C12.21 2 12.41 2.06 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5M12 4.15L6.04 7.5L12 10.85L17.96 7.5L12 4.15M5 15.91L11 19.29V12.58L5 9.21V15.91M19 15.91V9.21L13 12.58V19.29L19 15.91Z</Geometry>
+        <Geometry x:Key="IconDisc">M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,16.5A4.5,4.5 0 0,1 7.5,12A4.5,4.5 0 0,1 12,7.5A4.5,4.5 0 0,1 16.5,12A4.5,4.5 0 0,1 12,16.5M12,10.5A1.5,1.5 0 0,0 10.5,12A1.5,1.5 0 0,0 12,13.5A1.5,1.5 0 0,0 13.5,12A1.5,1.5 0 0,0 12,10.5Z</Geometry>
+        <Geometry x:Key="IconSettings">M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.65 15.47,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.53,5.32 7.96,5.65 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.35 8.53,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.47,18.68 16.03,18.35 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z</Geometry>
+        <Geometry x:Key="IconRefresh">M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z</Geometry>
+        <Geometry x:Key="IconLogs">M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3M7,7H17V5H19V19H5V5H7V7M12,11L11,15L15,8L12,5L8,12L12,11.5L13,11Z</Geometry>
+        <Geometry x:Key="IconDownload">M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z</Geometry>
+        <Geometry x:Key="IconClose">M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z</Geometry>
+
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <infra:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
-        <infra:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
+        <infra:InverseBooleanToVisibilityConverter x:Key="InvBoolToVis" />
+        <infra:BooleanToOpacityConverter x:Key="BoolToOpacity" />
+        
         <!-- Стили кнопок -->
-        <Style x:Key="MenuButtonStyle"
-               TargetType="Button">
-            <Setter Property="Background"
-                    Value="Transparent" />
-            <Setter Property="Foreground"
-                    Value="#A0AEC0" />
-            <Setter Property="BorderThickness"
-                    Value="0" />
-            <Setter Property="FontSize"
-                    Value="14" />
-            <Setter Property="HorizontalContentAlignment"
-                    Value="Left" />
-            <Setter Property="Padding"
-                    Value="20,12" />
-            <Setter Property="Cursor"
-                    Value="Hand" />
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource SidebarText}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="12,4" />
+            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter VerticalAlignment="Center" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.ColumnSpan="2" VerticalAlignment="Center" />
+                            </Grid>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#2D3A4F" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="#FFFFFF" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver"
-                         Value="True">
-                    <Setter Property="Foreground"
-                            Value="White" />
-                    <Setter Property="Background"
-                            Value="#38455A" />
-                </Trigger>
-            </Style.Triggers>
         </Style>
-        <Style x:Key="ActiveMenuButtonStyle"
-               TargetType="Button"
-               BasedOn="{StaticResource MenuButtonStyle}">
-            <Setter Property="Background"
-                    Value="#2A4365" />
-            <Setter Property="Foreground"
-                    Value="White" />
-            <Setter Property="FontWeight"
-                    Value="SemiBold" />
-            <Setter Property="BorderBrush"
-                    Value="#4299E1" />
-            <Setter Property="BorderThickness"
-                    Value="4,0,0,0" />
-        </Style>
-        <Style x:Key="PrimaryButtonStyle"
-               TargetType="Button">
-            <Setter Property="Background"
-                    Value="#3182CE" />
-            <Setter Property="Foreground"
-                    Value="White" />
-            <Setter Property="FontSize"
-                    Value="14" />
-            <Setter Property="FontWeight"
-                    Value="Bold" />
-            <Setter Property="Padding"
-                    Value="25,10" />
-            <Setter Property="BorderThickness"
-                    Value="0" />
-            <Setter Property="Cursor"
-                    Value="Hand" />
+        
+        <Style x:Key="ActiveMenuButtonStyle" TargetType="Button" BasedOn="{StaticResource MenuButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource SidebarItemActive}" />
+            <Setter Property="Foreground" Value="{StaticResource SidebarTextActive}" />
+            <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center" />
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Border HorizontalAlignment="Left" Width="4" Height="20" Background="White" CornerRadius="2" Margin="-16,0,0,0"/>
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Grid>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="0" Color="#3B82F6" Opacity="0.5"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBlue}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Padding" Value="24,12" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Effect" Value="{StaticResource ButtonShadow}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="12">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#2563EB" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
-                <Trigger Property="IsMouseOver"
-                         Value="True">
-                    <Setter Property="Background"
-                            Value="#2B6CB0" />
-                </Trigger>
-                <Trigger Property="IsEnabled"
-                         Value="False">
-                    <Setter Property="Background"
-                            Value="#A0AEC0" />
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#E2E8F0" />
+                    <Setter Property="Foreground" Value="#94A3B8" />
+                    <Setter Property="Effect" Value="{x:Null}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -115,7 +181,7 @@
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false" />
             <Setter Property="Stylus.IsFlicksEnabled" Value="false" />
-            <Setter Property="Width" Value="8" />
+            <Setter Property="Width" Value="6" />
             <Setter Property="Margin" Value="4,0,0,0" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -126,7 +192,7 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Border Background="#CBD5E0" CornerRadius="4" />
+                                                <Border Background="#CBD5E0" CornerRadius="3" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -138,15 +204,15 @@
             </Setter>
         </Style>
         <Style TargetType="{x:Type ScrollViewer}">
-            <Setter Property="Padding" Value="0,0,15,0" />
+            <Setter Property="Padding" Value="0,0,10,0" />
         </Style>
 
         <Style x:Key="LogHandleButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#E2E8F0"/>
+            <Setter Property="Background" Value="{StaticResource BorderLight}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4,4,0,0">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6,6,0,0">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -158,6 +224,57 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderLight}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextDark}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="#3B82F6" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource TextDark}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
+
+        <Geometry x:Key="IconFolder">M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z</Geometry>
+        <Geometry x:Key="IconFlash">M7,2V13H10V22L17,10H13L17,2H7Z</Geometry>
+        <Geometry x:Key="IconOpenOutside">M14,3V5H17.59L7,15.59L8.41,17L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z</Geometry>
 
         <!-- АНИМАЦИИ ВЫЕЗДА ЛОГА -->
         <Storyboard x:Key="LogOpacityIn">
@@ -181,6 +298,22 @@
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="6" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}" />
+            <Setter Property="Background" Value="#E2E8F0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid x:Name="TemplateRoot">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="3" />
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" Background="{TemplateBinding Foreground}" CornerRadius="3" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -189,64 +322,104 @@
         </Grid.ColumnDefinitions>
         <!-- САЙДБАР -->
         <Border Grid.Column="0"
-                Background="#1A202C">
-            <StackPanel>
-                <StackPanel Orientation="Horizontal"
-                            Margin="20,30,20,5">
-                    <TextBlock Text="AIS"
-                               Foreground="#4299E1"
-                               FontWeight="Bold"
-                               FontSize="20" />
-                    <TextBlock Text=" Manager"
-                               Foreground="White"
-                               FontWeight="Bold"
-                               FontSize="20" />
+                Background="{StaticResource SidebarGradient}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                
+                <StackPanel Grid.Row="0" Margin="25,45,20,35">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="42" Height="42" Background="{StaticResource PrimaryBlue}" CornerRadius="12">
+                            <Path Data="{StaticResource IconFlash}" Fill="White" Stretch="Uniform" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" ShadowDepth="0" Color="#3B82F6" Opacity="0.5"/>
+                            </Border.Effect>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="AIS MANAGER" Foreground="White" FontWeight="Black" FontSize="16" />
+                            <TextBlock Text="Automated Update" Foreground="{StaticResource SidebarText}" FontSize="10" FontWeight="Medium" Margin="0,2,0,0"/>
+                            <Border Background="#EF4444" 
+                                    HorizontalAlignment="Left" 
+                                    Padding="8,3" 
+                                    CornerRadius="5" 
+                                    Margin="0,8,0,0">
+                                <TextBlock Text="RELEASE PROTOTYPE" 
+                                           Foreground="White" 
+                                           FontSize="9" 
+                                           FontWeight="Black" />
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="10" Color="#EF4444" Opacity="0.4" ShadowDepth="0"/>
+                                </Border.Effect>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
-                <TextBlock Text="Automated Update System"
-                           Foreground="#718096"
-                           FontSize="11"
-                           Margin="20,0,0,10" />
-                <Border Background="#E53E3E" 
-                        HorizontalAlignment="Left" 
-                        Margin="20,0,0,20" 
-                        Padding="8,2" 
-                        CornerRadius="4">
-                    <TextBlock Text="PROTOTYPE" 
-                               Foreground="White" 
-                               FontSize="10" 
-                               FontWeight="Bold" />
-                </Border>
-                <Separator Background="#2D3748"
-                           Margin="0,0,0,10" />
-                <Button x:Name="BtnFixes"
-                        Content="📦  Пакеты исправлений"
-                        Style="{StaticResource ActiveMenuButtonStyle}"
-                        Click="MenuButton_Click" />
-                <Grid>
-                    <Button x:Name="BtnDistros"
-                            Content="💿  Дистрибутивы ПО"
+
+                <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                    <Button x:Name="BtnFixes"
+                            Style="{StaticResource ActiveMenuButtonStyle}"
+                            Click="MenuButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource IconBox}" 
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                  Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                            <TextBlock Text="Пакеты исправлений" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <Grid>
+                        <Button x:Name="BtnDistros"
+                                Style="{StaticResource MenuButtonStyle}"
+                                Click="MenuButton_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconDisc}" 
+                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                      Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                <TextBlock Text="Дистрибутивы ПО" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Border Background="#10B981" 
+                                Width="6" 
+                                Height="6" 
+                                CornerRadius="3" 
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Center" 
+                                Margin="0,0,25,0"
+                                IsHitTestVisible="False"
+                                Visibility="{Binding HasNewDistroNotification, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Color="#10B981" Opacity="0.5"/>
+                            </Border.Effect>
+                        </Border>
+                    </Grid>
+
+                    <Button x:Name="BtnSettings"
                             Style="{StaticResource MenuButtonStyle}"
-                            Click="MenuButton_Click" />
-                    <!-- Зеленый кружочек (индикатор завершенной загрузки) -->
-                    <Border Background="#48BB78" 
-                            Width="8" 
-                            Height="8" 
-                            CornerRadius="4" 
-                            HorizontalAlignment="Right" 
-                            VerticalAlignment="Center" 
-                            Margin="0,0,15,0"
-                            IsHitTestVisible="False"
-                            Visibility="{Binding HasNewDistroNotification, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="4" ShadowDepth="0" Color="#48BB78" Opacity="0.6"/>
-                        </Border.Effect>
-                    </Border>
-                </Grid>
-                <Button x:Name="BtnSettings"
-                        Content="⚙️  Настройки"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Click="MenuButton_Click" />
-            </StackPanel>
+                            Click="MenuButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource IconSettings}" 
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                  Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                            <TextBlock Text="Настройки" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <TextBlock Grid.Row="2" 
+                           Text="v 0.8.0" 
+                           Foreground="{StaticResource SidebarText}" 
+                           FontSize="10" 
+                           Margin="25,20" 
+                           Opacity="0.6"
+                           VerticalAlignment="Bottom"/>
+            </Grid>
         </Border>
         <!-- КОНТЕНТ -->
         <Grid Grid.Column="1" VerticalAlignment="Stretch">
@@ -280,73 +453,79 @@
             </Grid.RowDefinitions>
             <!-- ШАПКА -->
             <Border Grid.Row="0"
-                    Background="White"
-                    BorderBrush="#E2E8F0"
-                    BorderThickness="0,0,0,1">
+                    Background="#F2FFFFFF"
+                    BorderBrush="{StaticResource BorderLight}"
+                    BorderThickness="0,0,0,1"
+                    Effect="{StaticResource CardShadow}">
                 <Grid Margin="30,0">
                     <StackPanel VerticalAlignment="Center"
                                 HorizontalAlignment="Left">
-                        <TextBlock Text="Текущая версия АИС Налог 3 Пром:"
-                                   Foreground="#718096"
-                                   FontSize="12" />
+                        <TextBlock Text="ТЕКУЩАЯ ВЕРСИЯ АИС НАЛОГ 3 ПРОМ"
+                                   Foreground="{StaticResource TextMuted}"
+                                   FontSize="10"
+                                   FontWeight="Bold" 
+                                  />
                         <TextBlock Text="{Binding CurrentVersion}"
-                                   Foreground="#2D3748"
+                                   Foreground="{StaticResource TextDark}"
                                    FontWeight="Bold"
-                                   FontSize="18"
-                                   Margin="0,2,0,0" />
+                                   FontSize="20"
+                                   Margin="0,4,0,0" />
                     </StackPanel>
+                    
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Center">
-                        <Ellipse Width="10"
-                                 Height="10"
-                                 Fill="{Binding AutoCheckStatusColor}"
-                                 Margin="0,0,10,0"
-                                 VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
+                        
+                        <Border Background="{Binding AutoCheckStatusColor}" 
+                                Width="8" Height="8" CornerRadius="4" Margin="0,0,12,0"/>
+                        
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,25,0">
                             <TextBlock Text="{Binding AutoCheckStatusText}"
                                        Foreground="{Binding AutoCheckStatusColor}"
-                                       FontSize="12"
-                                       FontWeight="SemiBold" />
+                                       FontSize="11"
+                                       FontWeight="Bold" />
                             <TextBlock Text="{Binding LastCheckTimeText}"
-                                       Foreground="#A0AEC0"
+                                       Foreground="{StaticResource TextMuted}"
                                        FontSize="10" />
                         </StackPanel>
+
+                        <Rectangle Width="1" Height="30" Fill="{StaticResource BorderLight}" Margin="0,0,15,0"/>
+
                         <Button Command="{Binding ToggleLogCommand}"
-                                Width="40"
-                                Height="32"
-                                Margin="20,0,0,0"
+                                Width="40" Height="40"
                                 Background="Transparent"
                                 BorderThickness="0"
                                 ToolTip="Показать/скрыть логи"
                                 Cursor="Hand">
                             <Grid>
-                                <TextBlock Text="📋"
-                                           FontSize="16"
-                                           VerticalAlignment="Center"
-                                           HorizontalAlignment="Center" 
-                                           Opacity="{Binding IsLogVisible, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=0.5}"/>
-                                <!-- Индикатор новых логов (точка) -->
-                                <Ellipse Width="8" Height="8" 
-                                         Fill="#E53E3E" 
+                                <Path Data="{StaticResource IconLogs}" 
+                                      Fill="{StaticResource TextDark}"
+                                      Width="18" Height="18" Stretch="Uniform"
+                                      Opacity="{Binding IsLogVisible, Converter={StaticResource BoolToOpacity}, ConverterParameter=0.5}"/>
+                                <Border Width="10" Height="10" 
+                                         Background="#EF4444" 
+                                         CornerRadius="5"
                                          VerticalAlignment="Top" 
                                          HorizontalAlignment="Right" 
-                                         Margin="0,-2,-2,0"
-                                         Visibility="{Binding HasUnreadLogs, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                         Margin="0,2,2,0"
+                                         Visibility="{Binding HasUnreadLogs, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="4" Color="#EF4444" Opacity="0.4" ShadowDepth="0"/>
+                                    </Border.Effect>
+                                </Border>
                             </Grid>
                         </Button>
+
                         <Button Command="{Binding CheckUpdatesCommand}"
-                                Width="32"
-                                Height="32"
-                                Margin="10,0,0,0"
-                                Background="White"
-                                BorderBrush="#E2E8F0"
-                                BorderThickness="1"
+                                Width="40" Height="40"
+                                Margin="8,0,0,0"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 ToolTip="Проверить обновления"
                                 Cursor="Hand">
-                            <TextBlock Text="↻"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Center" />
+                            <Path Data="{StaticResource IconRefresh}" 
+                                  Fill="{StaticResource TextDark}"
+                                  Width="18" Height="18" Stretch="Uniform"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -391,22 +570,73 @@
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="Margin" Value="0,0,0,10" />
+                                <Setter Property="Margin" Value="0,0,0,12" />
                                 <Setter Property="Padding" Value="0"/>
                                 <Setter Property="Background" Value="Transparent"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListViewItem">
-                                            <Border Background="White"
-                                                    BorderBrush="#E2E8F0"
+                                            <Border x:Name="itemBorder" 
+                                                    Background="White"
+                                                    BorderBrush="{StaticResource BorderLight}"
                                                     BorderThickness="1"
-                                                    CornerRadius="8"
-                                                    Padding="15,12">
+                                                    CornerRadius="16"
+                                                    Padding="20,18"
+                                                    RenderTransformOrigin="0.5,0.5">
+                                                <Border.RenderTransform>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </Border.RenderTransform>
                                                 <Border.Effect>
-                                                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.03"/>
+                                                    <DropShadowEffect x:Name="itemShadow" BlurRadius="25" ShadowDepth="5" Color="#000000" Opacity="0.12"/>
                                                 </Border.Effect>
                                                 <ContentPresenter />
                                             </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <ColorAnimation Storyboard.TargetName="itemBorder" 
+                                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                                                To="#3B82F6" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemShadow" 
+                                                                                 Storyboard.TargetProperty="Opacity"
+                                                                                 To="0.25" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemShadow" 
+                                                                                 Storyboard.TargetProperty="BlurRadius"
+                                                                                 To="35" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemBorder"
+                                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                                 To="1.005" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemBorder"
+                                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                                 To="1.005" Duration="0:0:0.2"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                    <Trigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <ColorAnimation Storyboard.TargetName="itemBorder" 
+                                                                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                                                Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemShadow" 
+                                                                                 Storyboard.TargetProperty="Opacity"
+                                                                                 Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemShadow" 
+                                                                                 Storyboard.TargetProperty="BlurRadius"
+                                                                                 Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemBorder"
+                                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                                 To="1" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="itemBorder"
+                                                                                 Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                                 To="1" Duration="0:0:0.2"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.ExitActions>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
@@ -416,36 +646,42 @@
                             <DataTemplate>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="40" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="110" />
                                     </Grid.ColumnDefinitions>
+                                    
                                     <CheckBox IsChecked="{Binding IsSelected}"
-                                              VerticalAlignment="Center" />
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Center"/>
+                                    
                                     <StackPanel Grid.Column="1"
                                                 VerticalAlignment="Center"
                                                 Margin="10,0,0,0">
                                         <TextBlock Text="{Binding FileName}"
                                                    FontWeight="SemiBold"
-                                                   FontSize="13"
-                                                   Foreground="#2D3748" />
+                                                   FontSize="14"
+                                                   Foreground="{StaticResource TextDark}" />
                                         <TextBlock Text="{Binding Size}"
                                                    FontSize="11"
-                                                   Foreground="#A0AEC0" />
+                                                   Foreground="{StaticResource TextMuted}" 
+                                                   Margin="0,2,0,0"/>
                                     </StackPanel>
-                                    <ProgressBar Grid.Column="2"
-                                                 Value="{Binding ProgressValue}"
-                                                 Maximum="100"
-                                                 Height="4"
-                                                 VerticalAlignment="Center"
-                                                 Margin="10,0"
-                                                 Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    
+                                    <Grid Grid.Column="2" VerticalAlignment="Center" Margin="15,0">
+                                        <ProgressBar Value="{Binding ProgressValue}"
+                                                     Maximum="100"
+                                                     Height="6"
+                                                     VerticalAlignment="Center"
+                                                     Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </Grid>
+                                    
                                     <Border Grid.Column="3"
                                             Background="{Binding StatusBgColor}"
-                                            CornerRadius="10"
-                                            Padding="8,3"
-                                            HorizontalAlignment="Center">
+                                            CornerRadius="6"
+                                            Padding="10,5"
+                                            HorizontalAlignment="Right">
                                         <TextBlock Text="{Binding StatusText}"
                                                    FontSize="10"
                                                    Foreground="{Binding StatusFgColor}"
@@ -460,34 +696,42 @@
                     <StackPanel Grid.Row="2" 
                                 Orientation="Horizontal" 
                                 HorizontalAlignment="Right" 
-                                Margin="0,15,0,0">
+                                Margin="0,20,0,0">
                         
-                        <!-- Кнопка отмены (видна только при загрузке) -->
+                        <!-- Кнопка отмены -->
                         <Button x:Name="BtnCancelFixes"
-                                Content="❌ Отменить загрузку"
                                 Command="{Binding CancelDownloadFixesCommand}"
                                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Margin="0,0,10,0"
-                                Padding="15,8" 
-                                Background="#E53E3E" 
-                                Foreground="White" 
-                                BorderThickness="0"
-                                Height="40">
+                                Margin="0,0,12,0"
+                                Padding="18,10" 
+                                Background="#FEF2F2" 
+                                Foreground="#EF4444" 
+                                BorderBrush="#FEE2E2"
+                                BorderThickness="1"
+                                Height="42">
                              <Button.Resources>
                                 <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="6"/>
+                                    <Setter Property="CornerRadius" Value="8"/>
                                 </Style>
                             </Button.Resources>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
+                                <TextBlock Text="Отменить загрузку" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Button>
 
-                        <!-- Кнопка скачивания (скрыта при загрузке) -->
+                        <!-- Кнопка скачивания -->
                         <Button x:Name="BtnProcess"
-                                Content="⬇️ Скачать и создать FIX_№.exe"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding DownloadCommand}"
-                                Visibility="{Binding IsBusy, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                                Height="40"
-                                Width="260" />
+                                Visibility="{Binding IsBusy, Converter={StaticResource InvBoolToVis}}"
+                                Height="42"
+                                Width="280">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconDownload}" Fill="White" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"/>
+                                <TextBlock Text="СКАЧАТЬ И СОЗДАТЬ FIX_№.EXE" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
                 <!-- VIEW: DISTROS -->
@@ -498,12 +742,58 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="Дистрибутивы ПО (FTP)" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock Grid.Row="0" Text="Дистрибутивы ПО (FTP)" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDark}" Margin="0,0,0,20"/>
                     
                     <ScrollViewer Grid.Row="1">
                         <StackPanel>
                             <!-- ГРУППА OE -->
-                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                            <ContentControl>
+                                <ContentControl.Template>
+                                    <ControlTemplate TargetType="ContentControl">
+                                        <Border x:Name="groupBorder" 
+                                                Background="White" 
+                                                BorderBrush="{StaticResource BorderLight}" 
+                                                BorderThickness="1" 
+                                                CornerRadius="16" 
+                                                Padding="25" 
+                                                Margin="0,0,0,25"
+                                                RenderTransformOrigin="0.5,0.5">
+                                            <Border.RenderTransform>
+                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                            </Border.RenderTransform>
+                                            <Border.Effect>
+                                                <DropShadowEffect x:Name="groupShadow" BlurRadius="25" ShadowDepth="5" Color="#000000" Opacity="0.12"/>
+                                            </Border.Effect>
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="#3B82F6" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="Opacity" To="0.25" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="BlurRadius" To="35" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)" To="1.005" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)" To="1.005" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="BlurRadius" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.ExitActions>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ContentControl.Template>
                                 <StackPanel>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -511,50 +801,105 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
-                                            <TextBlock Text="Последняя версия АИС Налог 3 OE:" Foreground="#718096" FontSize="12"/>
-                                            <TextBlock Text="{Binding LatestDistro.Version, FallbackValue='Не проверено'}" FontWeight="Bold" FontSize="20" Margin="0,5,0,0"/>
-                                            <TextBlock Text="{Binding LatestDistro.FileName}" Foreground="#A0AEC0" FontSize="11" Margin="0,2,0,0"/>
+                                            <TextBlock Text="ПОСЛЕДНЯЯ ВЕРСИЯ OE" Foreground="{StaticResource TextMuted}" FontSize="10" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding LatestDistro.Version, FallbackValue='Не проверено'}" Foreground="{StaticResource TextDark}" FontWeight="Bold" FontSize="22" Margin="0,8,0,0"/>
+                                            <TextBlock Text="{Binding LatestDistro.FileName}" Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,4,0,0"/>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="↻ Обновить OE" Command="{Binding CheckDistrosCommand}" Padding="15,5" Background="#EDF2F7" BorderBrush="#E2E8F0" BorderThickness="1" Cursor="Hand" VerticalAlignment="Top"/>
+                                        <Button Grid.Column="1" Command="{Binding CheckDistrosCommand}" 
+                                                Padding="15,8" Background="#F1F5F9" BorderThickness="0" Cursor="Hand" VerticalAlignment="Top">
+                                            <Button.Resources>
+                                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
+                                            </Button.Resources>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconRefresh}" Fill="{StaticResource TextDark}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Обновить" FontWeight="SemiBold" FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
                                     </Grid>
-                                    <Separator Margin="0,15" Background="#E2E8F0"/>
-                                    <StackPanel>
-                                        <StackPanel.Style>
-                                            <Style TargetType="StackPanel">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding LatestDistro}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </StackPanel.Style>
-                                        <TextBlock Text="Статус:" Foreground="#718096" FontSize="12"/>
-                                        <TextBlock Text="{Binding LatestDistro.DownloadStatus}" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                    
+                                    <Separator Margin="0,20" Background="{StaticResource BorderLight}"/>
+                                    
+                                    <StackPanel Visibility="{Binding LatestDistro, Converter={StaticResource InvBoolToVis}, ConverterParameter=null}">
+                                        <TextBlock Text="Статус:" Foreground="{StaticResource TextMuted}" FontSize="12"/>
+                                        <TextBlock Text="{Binding LatestDistro.DownloadStatus}" Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                        
                                         <ProgressBar Value="{Binding LatestDistro.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
-                                                     Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                      Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
                                         <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
-                                            <Button Content="⬇️ Скачать OE (.rar)" 
-                                                    Style="{StaticResource PrimaryButtonStyle}" 
+                                            <Button Style="{StaticResource PrimaryButtonStyle}" 
                                                     Command="{Binding DownloadDistroCommand}" 
-                                                    Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                            <Button Content="❌ Отменить загрузку" 
-                                                    Command="{Binding DataContext.CancelDownloadOeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource InvBoolToVis}}"
+                                                    Padding="20,10">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconDownload}" Fill="White" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0"/>
+                                                    <TextBlock Text="Скачать OE (.rar)" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            
+                                            <Button Command="{Binding DataContext.CancelDownloadOeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Padding="15,8" Background="#E53E3E" Foreground="White" BorderThickness="0">
+                                                    Padding="18,10" Background="#FEF2F2" Foreground="#EF4444" BorderThickness="0">
                                                 <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="6"/>
-                                                    </Style>
+                                                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
                                                 </Button.Resources>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
+                                                    <TextBlock Text="Отменить загрузку" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
-                            </Border>
+                            </ContentControl>
 
                             <!-- ГРУППА PROM -->
-                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="20">
+                            <ContentControl>
+                                <ContentControl.Template>
+                                    <ControlTemplate TargetType="ContentControl">
+                                        <Border x:Name="groupBorder" 
+                                                Background="White" 
+                                                BorderBrush="{StaticResource BorderLight}" 
+                                                BorderThickness="1" 
+                                                CornerRadius="16" 
+                                                Padding="25" 
+                                                RenderTransformOrigin="0.5,0.5">
+                                            <Border.RenderTransform>
+                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                            </Border.RenderTransform>
+                                            <Border.Effect>
+                                                <DropShadowEffect x:Name="groupShadow" BlurRadius="25" ShadowDepth="5" Color="#000000" Opacity="0.12"/>
+                                            </Border.Effect>
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="#3B82F6" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="Opacity" To="0.25" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="BlurRadius" To="35" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)" To="1.005" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)" To="1.005" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="BlurRadius" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.2"/>
+                                                            <DoubleAnimation Storyboard.TargetName="groupBorder" Storyboard.TargetProperty="(Border.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.ExitActions>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ContentControl.Template>
                                 <StackPanel>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -562,249 +907,230 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
-                                            <TextBlock Text="Последняя версия АИС Налог 3 Пром:" Foreground="#718096" FontSize="12"/>
-                                            <TextBlock Text="{Binding LatestAisProm.Version, FallbackValue='Не проверено'}" FontWeight="Bold" FontSize="20" Margin="0,5,0,0"/>
-                                            <TextBlock Text="{Binding LatestAisProm.FileName}" Foreground="#A0AEC0" FontSize="11" Margin="0,2,0,0"/>
+                                            <TextBlock Text="ПОСЛЕДНЯЯ ВЕРСИЯ ПРОМ" Foreground="{StaticResource TextMuted}" FontSize="10" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding LatestAisProm.Version, FallbackValue='Не проверено'}" Foreground="{StaticResource TextDark}" FontWeight="Bold" FontSize="22" Margin="0,8,0,0"/>
+                                            <TextBlock Text="{Binding LatestAisProm.FileName}" Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,4,0,0"/>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="↻ Обновить Пром" Command="{Binding CheckAisPromCommand}" Padding="15,5" Background="#EDF2F7" BorderBrush="#E2E8F0" BorderThickness="1" Cursor="Hand" VerticalAlignment="Top"/>
+                                        <Button Grid.Column="1" Command="{Binding CheckAisPromCommand}" 
+                                                Padding="15,8" Background="#F1F5F9" BorderThickness="0" Cursor="Hand" VerticalAlignment="Top">
+                                            <Button.Resources>
+                                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
+                                            </Button.Resources>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconRefresh}" Fill="{StaticResource TextDark}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Обновить" FontWeight="SemiBold" FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
                                     </Grid>
-                                    <Separator Margin="0,15" Background="#E2E8F0"/>
-                                    <StackPanel>
-                                        <StackPanel.Style>
-                                            <Style TargetType="StackPanel">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding LatestAisProm}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </StackPanel.Style>
-                                        <TextBlock Text="Статус:" Foreground="#718096" FontSize="12"/>
-                                        <TextBlock Text="{Binding LatestAisProm.DownloadStatus}" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                    
+                                    <Separator Margin="0,20" Background="{StaticResource BorderLight}"/>
+                                    
+                                    <StackPanel Visibility="{Binding LatestAisProm, Converter={StaticResource InvBoolToVis}, ConverterParameter=null}">
+                                        <TextBlock Text="Статус:" Foreground="{StaticResource TextMuted}" FontSize="12"/>
+                                        <TextBlock Text="{Binding LatestAisProm.DownloadStatus}" Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                                        
                                         <ProgressBar Value="{Binding LatestAisProm.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
-                                                     Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                     Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        
                                         <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
-                                            <Button Content="⬇️ Скачать Пром (.rar)" 
-                                                    Style="{StaticResource PrimaryButtonStyle}" 
+                                            <Button Style="{StaticResource PrimaryButtonStyle}" 
                                                     Command="{Binding DownloadAisPromCommand}" 
-                                                    Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                            <Button Content="❌ Отменить загрузку" 
-                                                    Command="{Binding DataContext.CancelDownloadPromCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource InvBoolToVis}}"
+                                                    Padding="20,10">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconDownload}" Fill="White" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0"/>
+                                                    <TextBlock Text="Скачать Пром (.rar)" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            
+                                            <Button Command="{Binding DataContext.CancelDownloadPromCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Padding="15,8" Background="#E53E3E" Foreground="White" BorderThickness="0">
+                                                    Padding="18,10" Background="#FEF2F2" Foreground="#EF4444" BorderThickness="0">
                                                 <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="6"/>
-                                                    </Style>
+                                                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
                                                 </Button.Resources>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
+                                                    <TextBlock Text="Отменить загрузку" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
-                            </Border>
+                            </ContentControl>
                         </StackPanel>
                     </ScrollViewer>
                     
-                    <TextBlock Grid.Row="2" Text="* Дистрибутив будет скачан в папку, указанную в настройках." Foreground="#A0AEC0" FontSize="11" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="2" Text="* Дистрибутив будет скачан в папку, указанную в настройках." Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,15,0,0"/>
                 </Grid>
                 <!-- VIEW: SETTINGS -->
-                <Grid x:Name="ViewSettings"
-                      Visibility="Collapsed">
+                <Grid x:Name="ViewSettings" Visibility="Collapsed">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="0,0,10,20">
-                            <Grid Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,10,30">
+                            <Grid Margin="0,10,0,25">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Настройки"
-                                           FontSize="18"
+                                <TextBlock Text="Настройки приложения"
+                                           FontSize="22"
+                                           Foreground="{StaticResource TextDark}"
                                            FontWeight="Bold" />
                                 <Button Grid.Column="1" 
-                                        Content="⚡ Авто-настройка всех путей" 
                                         Command="{Binding AutoSetupPathsCommand}"
-                                        Padding="12,6" 
-                                        Background="#EDF2F7" 
-                                        BorderBrush="#CBD5E0" 
-                                        BorderThickness="1" 
+                                        Padding="15,8" 
+                                        Background="#F1F5F9" 
+                                        BorderThickness="0" 
                                         Cursor="Hand">
                                     <Button.Resources>
-                                        <Style TargetType="Border">
-                                            <Setter Property="CornerRadius" Value="4"/>
-                                        </Style>
+                                        <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
                                     </Button.Resources>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconFlash}" Fill="{StaticResource PrimaryBlue}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Авто-настройка всех путей" FontWeight="Bold" Foreground="{StaticResource PrimaryBlue}"/>
+                                    </StackPanel>
                                 </Button>
                             </Grid>
-                            <TextBlock Text="Нажмите 'Авто-настройка', чтобы быстро создать структуру папок в выбранном месте." 
-                                       FontSize="12" Foreground="#718096" Margin="0,-15,0,20"/>
+
                             <!-- БЛОК: ПАКЕТЫ ИСПРАВЛЕНИЙ -->
-                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                            <Border Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" CornerRadius="16" Padding="25" Margin="0,0,0,25" Effect="{StaticResource CardShadow}">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                                        <TextBlock Text="📦" FontSize="16" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Автоматизация фиксов" FontSize="15" FontWeight="Bold" Foreground="#2D3748"/>
+                                        <Path Data="{StaticResource IconBox}" Fill="{StaticResource TextDark}" Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Автоматизация фиксов" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
                                     </StackPanel>
                                     
                                     <CheckBox IsChecked="{Binding IsFullAuto}"
-                                              Content="Полная автоматизация (проверка обновлений и создание SFX)"
-                                              Margin="0,0,0,12" />
+                                              Content="Полная автоматизация (проверка обновлений и создание SFX)" />
                                     <CheckBox IsChecked="{Binding AutoDownload}"
                                               Content="Автоматически скачивать новые фиксы"
-                                              Margin="0,0,0,5" />
+                                              Margin="0,8,0,5" />
                                     <TextBlock Text="При нахождении новых обновлений, они будут скачаны автоматически." 
-                                               FontSize="11" Foreground="#718096" Margin="25,0,0,0"/>
+                                               FontSize="11" Foreground="{StaticResource TextMuted}" Margin="30,0,0,0"/>
                                 </StackPanel>
                             </Border>
 
                             <!-- БЛОК: ДИСТРИБУТИВЫ -->
-                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                            <Border Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" CornerRadius="16" Padding="25" Margin="0,0,0,25" Effect="{StaticResource CardShadow}">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                                        <TextBlock Text="💿" FontSize="16" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Автозагрузка дистрибутивов (FTP)" FontSize="15" FontWeight="Bold" Foreground="#2D3748"/>
+                                        <Path Data="{StaticResource IconDisc}" Fill="{StaticResource TextDark}" Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Автозагрузка дистрибутивов (FTP)" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
                                     </StackPanel>
 
                                     <CheckBox IsChecked="{Binding AutoDownloadDistro}"
-                                              Content="Автоматически скачивать новый дистрибутив (OE)"
-                                              Margin="0,0,0,12" />
+                                              Content="Автоматически скачивать новый дистрибутив (OE)" />
                                     
                                     <CheckBox IsChecked="{Binding AutoDownloadAisNalog3}"
                                               Content="Автоматически скачивать АИС Налог 3 (Пром)"
-                                              Margin="0,0,0,5" />
-                                    <TextBlock Text="Приложение будет проверять наличие новых версий на FTP и скачивать их в указанные ниже папки." 
-                                               FontSize="11" Foreground="#718096" Margin="25,0,0,0"/>
+                                              Margin="0,8,0,5" />
+                                    <TextBlock Text="Приложение будет проверять наличие новых версий на FTP и скачивать их автоматически." 
+                                               FontSize="11" Foreground="{StaticResource TextMuted}" Margin="30,0,0,0"/>
                                 </StackPanel>
                             </Border>
-                             <TextBlock Text="Папка выгрузки (архивы):"
-                                        Foreground="#718096"
-                                        Margin="0,0,0,5" />
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding DownloadPath, UpdateSourceTrigger=PropertyChanged}"
-                                         Padding="5" />
-                                <Button Grid.Column="1"
-                                        Content="📁"
-                                        Width="35"
-                                        Margin="5,0,0,0"
-                                        Command="{Binding SelectDownloadPathCommand}" />
-                            </Grid>
-                            <TextBlock Text="Папка для FIX_№.exe:"
-                                       Foreground="#718096"
-                                       Margin="0,0,0,5" />
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding SfxOutputPath, UpdateSourceTrigger=PropertyChanged}"
-                                         Padding="5" />
-                                <Button Grid.Column="1"
-                                        Content="📁"
-                                        Width="35"
-                                        Margin="5,0,0,0"
-                                        Command="{Binding SelectSfxOutputPathCommand}" />
-                            </Grid>
-                            <TextBlock Text="Папка для дистрибутивов (OE):"
-                                       Foreground="#718096"
-                                       Margin="0,0,0,5" />
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding DistroDownloadPath, UpdateSourceTrigger=PropertyChanged}"
-                                         Padding="5" />
-                                <Button Grid.Column="1"
-                                        Content="📁"
-                                        Width="35"
-                                        Margin="5,0,0,0"
-                                        Command="{Binding SelectDistroDownloadPathCommand}" />
-                            </Grid>
-                            <TextBlock Text="Папка для АИС Налог 3 (Пром):"
-                                       Foreground="#718096"
-                                       Margin="0,0,0,5" />
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding AisNalog3DownloadPath, UpdateSourceTrigger=PropertyChanged}"
-                                         Padding="5" />
-                                <Button Grid.Column="1"
-                                        Content="📁"
-                                        Width="35"
-                                        Margin="5,0,0,0"
-                                        Command="{Binding SelectAisPromDownloadPathCommand}" />
-                            </Grid>
-                            <Separator Margin="0,10,0,20"
-                                       Background="#E2E8F0" />
-                            <TextBlock Text="Диагностика и данные"
-                                       Foreground="#718096"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10" />
-                            <Button Content="📂 Открыть папку приложения (AppData)"
-                                    HorizontalAlignment="Left"
-                                    Padding="15,8"
-                                    Background="White"
-                                    BorderBrush="#CBD5E0"
-                                    BorderThickness="1"
-                                    Cursor="Hand"
-                                    Command="{Binding OpenAppDataCommand}">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Foreground"
-                                                Value="#4A5568" />
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver"
-                                                     Value="True">
-                                                <Setter Property="Background"
-                                                        Value="#EDF2F7" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            <Button Content="🗑️ Очистить файлы логов"
-                                    HorizontalAlignment="Left"
-                                    Padding="15,8"
-                                    Margin="0,10,0,0"
-                                    Background="White"
-                                    BorderBrush="#CBD5E0"
-                                    BorderThickness="1"
-                                    Cursor="Hand"
-                                    Command="{Binding ClearLogsCommand}">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Foreground"
-                                                Value="#4A5568" />
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver"
-                                                     Value="True">
-                                                <Setter Property="Background"
-                                                        Value="#FFF5F5" />
-                                                <Setter Property="Foreground"
-                                                        Value="#C53030" />
-                                                <Setter Property="BorderBrush"
-                                                        Value="#FEB2B2" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+
+                            <!-- БЛОК: ПУТИ СОХРАНЕНИЯ -->
+                            <Border Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" CornerRadius="16" Padding="25" Margin="0,0,0,25" Effect="{StaticResource CardShadow}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                        <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextDark}" Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Пути сохранения" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,15">
+                                        <TextBlock Text="Папка выгрузки (архивы):" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,0,0,6" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding DownloadPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <Button Grid.Column="1" Command="{Binding SelectDownloadPathCommand}" Width="42" Margin="8,0,0,0" Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                                                <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style></Button.Resources>
+                                                <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextDark}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,15">
+                                        <TextBlock Text="Папка для SFX (архиватор):" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,0,0,6" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding SfxOutputPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <Button Grid.Column="1" Command="{Binding SelectSfxOutputPathCommand}" Width="42" Margin="8,0,0,0" Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                                                <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style></Button.Resources>
+                                                <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextDark}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,15">
+                                        <TextBlock Text="Папка для дистрибутивов (OE):" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,0,0,6" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding DistroDownloadPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <Button Grid.Column="1" Command="{Binding SelectDistroDownloadPathCommand}" Width="42" Margin="8,0,0,0" Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                                                <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style></Button.Resources>
+                                                <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextDark}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,0">
+                                        <TextBlock Text="Папка для АИС Налог 3 (Пром):" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,0,0,6" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding AisNalog3DownloadPath, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <Button Grid.Column="1" Command="{Binding SelectAisPromDownloadPathCommand}" Width="42" Margin="8,0,0,0" Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1">
+                                                <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style></Button.Resources>
+                                                <Path Data="{StaticResource IconFolder}" Fill="{StaticResource TextDark}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- БЛОК: ОТЛАДКА -->
+                            <Border Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" CornerRadius="16" Padding="25" Margin="0,0,0,25" Effect="{StaticResource CardShadow}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                        <Path Data="{StaticResource IconSettings}" Fill="{StaticResource TextDark}" Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Отладка и диагностика" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Command="{Binding OpenAppDataCommand}" Padding="20,10" Background="#F1F5F9" BorderThickness="0" Cursor="Hand">
+                                            <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style></Button.Resources>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconOpenOutside}" Fill="{StaticResource TextDark}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,12,0"/>
+                                                <TextBlock Text="Открыть AppData" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Command="{Binding ClearLogsCommand}" Padding="20,10" Margin="12,0,0,0" Background="#FEF2F2" Foreground="#EF4444" BorderThickness="0" Cursor="Hand">
+                                            <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style></Button.Resources>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
+                                                <TextBlock Text="Очистить логи" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
             </Grid>
             <!-- SPLITTER -->
             <GridSplitter Grid.Row="2"
-                          Height="5"
+                          Height="6"
                           HorizontalAlignment="Stretch"
-                          Background="#E2E8F0"
+                          Background="Transparent"
                           ShowsPreview="True">
+                <GridSplitter.Template>
+                    <ControlTemplate TargetType="GridSplitter">
+                        <Border Background="Transparent">
+                            <Border Height="1" Width="40" Background="{StaticResource BorderLight}" CornerRadius="0.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </GridSplitter.Template>
                 <GridSplitter.Style>
                     <Style TargetType="GridSplitter">
                         <Setter Property="Visibility" Value="Visible"/>
@@ -820,8 +1146,8 @@
             <!-- ЛОГ ПАНЕЛЬ -->
             <Border x:Name="LogPanel" 
                     Grid.Row="3"
-                    Background="#F8FAFC"
-                    BorderBrush="#E2E8F0"
+                    Background="White"
+                    BorderBrush="{StaticResource BorderLight}"
                     BorderThickness="0,1,0,0"
                     MinHeight="50"
                     MaxHeight="400">
@@ -852,7 +1178,30 @@
                     </Style>
                 </Border.Style>
                 <Grid>
-                    <ScrollViewer x:Name="LogScroll">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Тулбар логов -->
+                    <Border Grid.Row="0" Background="#F8FAFC" BorderBrush="{StaticResource BorderLight}" BorderThickness="0,0,0,1" Padding="20,8">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconLogs}" Fill="{StaticResource TextMuted}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,10,0"/>
+                                <TextBlock Text="СИСТЕМНЫЙ ЛОГ" Foreground="{StaticResource TextMuted}" FontSize="10" FontWeight="Black" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <Button HorizontalAlignment="Right" Command="{Binding ClearLogsCommand}" 
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="10,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="10" Height="10" Stretch="Uniform" Margin="0,0,8,0"/>
+                                    <TextBlock Text="ОЧИСТИТЬ ВСЁ" Foreground="#EF4444" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" x:Name="LogScroll">
                         <TextBox Text="{Binding LogOutput, Mode=OneWay}"
                                  TextChanged="TextBox_TextChanged"
                                  IsReadOnly="True"
@@ -860,33 +1209,11 @@
                                  BorderThickness="0"
                                  FontFamily="Consolas"
                                  FontSize="12"
-                                 Padding="10"
+                                 Foreground="#334155"
+                                 Padding="20"
                                  SpellCheck.IsEnabled="False"
                                  TextWrapping="Wrap" />
                     </ScrollViewer>
-                    <Button Command="{Binding ClearLogsCommand}"
-                            Content="Очистить логи"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            Margin="0,5,25,0"
-                            Padding="8,2"
-                            FontSize="10"
-                            Background="White"
-                            BorderBrush="#CBD5E0"
-                            BorderThickness="1"
-                            Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Foreground" Value="#718096" />
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#F7FAFC" />
-                                        <Setter Property="Foreground" Value="#2D3748" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
                 </Grid>
             </Border>
         </Grid>

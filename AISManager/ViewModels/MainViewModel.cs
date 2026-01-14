@@ -783,10 +783,10 @@ namespace AISManager.ViewModels
                         var lastFix = selected
                             .Select(f => new { File = f, Info = ArchiveProcessorService.ParseArchiveName(f.FileName) })
                             .Where(x => x.Info.HasValue)
-                            .OrderByDescending(x => x.Info.Value.num)
+                            .OrderByDescending(x => x.Info!.Value.num)
                             .FirstOrDefault();
 
-                        string fixLabel = lastFix != null ? $"FIX_{lastFix.Info.Value.num}.exe" : "FIX_№.exe";
+                        string fixLabel = lastFix != null ? $"FIX_{lastFix.Info!.Value.num}.exe" : "FIX_№.exe";
                         AddLog($"Сформирован сборник: {fixLabel} (объединено {processedCount} фикса).");
                     }
                 }
