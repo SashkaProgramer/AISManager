@@ -59,6 +59,49 @@ namespace AISManager.Services
             return null;
         }
 
+        public static string GenerateFixesString(IEnumerable<int> numbers)
+        {
+            var sorted = numbers.Distinct().OrderBy(n => n).ToList();
+            if (sorted.Count == 0) return "№";
+            if (sorted.Count == 1) return sorted[0].ToString();
+
+            var ranges = new List<string>();
+            int start = sorted[0];
+            int prev = start;
+
+            for (int i = 1; i <= sorted.Count; i++)
+            {
+                if (i < sorted.Count && sorted[i] == prev + 1)
+                {
+                    prev = sorted[i];
+                    continue;
+                }
+
+                if (start == prev)
+                {
+                    ranges.Add(start.ToString());
+                }
+                else
+                {
+                    ranges.Add($"{start}-{prev}");
+                }
+
+                if (i < sorted.Count)
+                {
+                    start = sorted[i];
+                    prev = start;
+                }
+            }
+
+            var result = string.Join(",", ranges);
+            // Если строка слишком длинная, сокращаем
+            if (result.Length > 30)
+            {
+                return $"{sorted.First()}...{sorted.Last()}({sorted.Count}_шт)";
+            }
+            return result;
+        }
+
         public async Task<int> ProcessDownloadedHotfixesAsync(string sourcePath, AppConfig config, IEnumerable<string>? selectedFiles = null)
         {
             return await Task.Run(() =>
@@ -128,12 +171,13 @@ namespace AISManager.Services
                         else if (archive.Extension == ".rar") UnrarFile(archive.OriginalFilePath, stagingPath);
                     }
 
-                    var lastFixNumber = sortedList.Last().FixNumber;
+                    var fixNumbers = sortedList.Select(x => x.FixNumber).Distinct();
+                    var fixLabel = GenerateFixesString(fixNumbers);
 
                     // SFX Creation
                     var sfxOutputFolder = string.IsNullOrWhiteSpace(config.SfxOutputPath) ? sourcePath : config.SfxOutputPath;
                     Directory.CreateDirectory(sfxOutputFolder);
-                    var sfxPath = Path.Combine(sfxOutputFolder, $"FIX_{lastFixNumber}.exe");
+                    var sfxPath = Path.Combine(sfxOutputFolder, $"FIX_{fixLabel}.exe");
                     _sfxBuilder.Build(stagingPath, sfxPath);
 
                     return sortedList.Count;

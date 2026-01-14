@@ -9,10 +9,17 @@ using Serilog;
 
 namespace AISManager.Services
 {
+    public struct DownloadProgress
+    {
+        public long Received { get; set; }
+        public long Total { get; set; }
+        public int Percentage { get; set; }
+    }
+
     public interface IDistroService
     {
         Task<DistroInfo?> GetLatestDistroAsync(string ftpUrl);
-        Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null, System.Threading.CancellationToken ct = default);
+        Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<DownloadProgress>? progress = null, System.Threading.CancellationToken ct = default);
         Action<string>? OnLog { get; set; }
     }
 
@@ -28,6 +35,7 @@ namespace AISManager.Services
             try
             {
                 _logger.Debug("Checking latest distro at {Url}", ftpUrl);
+                AddUiLog($"Проверка списка версий на FTP: {ftpUrl}");
                 // 1. Get version folders
                 var versions = await ListFtpDirectoryAsync(ftpUrl);
                 if (!versions.Any())
@@ -63,9 +71,18 @@ namespace AISManager.Services
                 string latestVersionFolder = latest.Raw;
                 string versionStr = latest.Version;
 
-                // 2. Go to EKP folder
+                AddUiLog($"Найдена последняя версия: {versionStr} (папка {latestVersionFolder})");
+
+                // 2. Go to EKP folder - пробуем разные варианты регистра
                 string ekpPath = $"{ftpUrl}{latestVersionFolder}/EKP/";
                 var files = await ListFtpDirectoryAsync(ekpPath);
+
+                if (!files.Any())
+                {
+                    AddUiLog("Папка /EKP/ не найдена или пуста, пробуем /ekp/...");
+                    ekpPath = $"{ftpUrl}{latestVersionFolder}/ekp/";
+                    files = await ListFtpDirectoryAsync(ekpPath);
+                }
 
                 if (!files.Any())
                 {
@@ -96,7 +113,7 @@ namespace AISManager.Services
             }
         }
 
-        public async Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<int>? progress = null, System.Threading.CancellationToken ct = default)
+        public async Task DownloadDistroAsync(DistroInfo distro, string localPath, IProgress<DownloadProgress>? progress = null, System.Threading.CancellationToken ct = default)
         {
             try
             {
@@ -109,12 +126,15 @@ namespace AISManager.Services
                 long fileSize = -1;
                 try
                 {
+                    AddUiLog($"Запрос размера файла на FTP...");
 #pragma warning disable SYSLIB0014
                     var sizeRequest = (FtpWebRequest)WebRequest.Create(distro.FullUrl);
 #pragma warning restore SYSLIB0014
+                    sizeRequest.Proxy = null;
                     sizeRequest.Method = WebRequestMethods.Ftp.GetFileSize;
                     using var sizeResponse = (FtpWebResponse)await sizeRequest.GetResponseAsync();
                     fileSize = sizeResponse.ContentLength;
+                    if (fileSize > 0) AddUiLog($"Размер файла: {(fileSize / 1024.0 / 1024.0):F2} МБ");
                 }
                 catch (Exception exSize)
                 {
@@ -124,10 +144,13 @@ namespace AISManager.Services
 #pragma warning disable SYSLIB0014
                 var request = (FtpWebRequest)WebRequest.Create(distro.FullUrl);
 #pragma warning restore SYSLIB0014
+                request.Proxy = null;
                 request.Method = WebRequestMethods.Ftp.DownloadFile;
                 request.UseBinary = true;
                 request.EnableSsl = false;
+                request.KeepAlive = false;
 
+                AddUiLog($"Подключение к FTP для скачивания {distro.FileName}...");
                 using var response = (FtpWebResponse)await request.GetResponseAsync();
 
                 // Use fileSize from GetFileSize if ContentLength is not available
@@ -146,13 +169,16 @@ namespace AISManager.Services
                     await fileStream.WriteAsync(buffer, 0, bytesRead, ct);
                     totalBytesRead += bytesRead;
 
+                    int p = 0;
                     if (fileSize > 0)
                     {
-                        int p = (int)((totalBytesRead * 100) / fileSize);
-                        progress?.Report(p);
+                        p = (int)((totalBytesRead * 100L) / fileSize);
+                        if (p > 100) p = 100;
                     }
+                    progress?.Report(new DownloadProgress { Received = totalBytesRead, Total = fileSize, Percentage = p });
                 }
 
+                progress?.Report(new DownloadProgress { Received = totalBytesRead, Total = fileSize, Percentage = 100 });
                 _logger.Information("Download completed: {FileName}", distro.FileName);
             }
             catch (OperationCanceledException)
@@ -175,6 +201,7 @@ namespace AISManager.Services
 #pragma warning disable SYSLIB0014
                 var request = (FtpWebRequest)WebRequest.Create(url);
 #pragma warning restore SYSLIB0014
+                request.Proxy = null;
                 request.Method = WebRequestMethods.Ftp.ListDirectory;
 
                 using var response = (FtpWebResponse)await request.GetResponseAsync();
@@ -200,6 +227,7 @@ namespace AISManager.Services
             catch (Exception ex)
             {
                 _logger.Warning("Could not list FTP directory {Url}: {Message}", url, ex.Message);
+                AddUiLog($"Ошибка FTP при чтении {url}: {ex.Message}");
             }
             return results;
         }

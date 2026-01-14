@@ -16,7 +16,9 @@
         Background="{DynamicResource WindowGradient}"
         Closing="Window_Closing"
         UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display">
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
     <Window.Resources>
         <!-- MODERN PALETTE -->
         <SolidColorBrush x:Key="PrimaryBlue" Color="#3B82F6" />
@@ -72,7 +74,8 @@
                         <Border x:Name="border" 
                                 Background="{TemplateBinding Background}"
                                 CornerRadius="10"
-                                Padding="{TemplateBinding Padding}">
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -116,7 +119,8 @@
                         <Border x:Name="border" 
                                 Background="{TemplateBinding Background}"
                                 CornerRadius="10"
-                                Padding="{TemplateBinding Padding}">
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
                             <Grid>
                                 <Border HorizontalAlignment="Left" Width="4" Height="20" Background="White" CornerRadius="2" Margin="-16,0,0,0"/>
                                 <ContentPresenter VerticalAlignment="Center" />
@@ -146,7 +150,8 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="12">
+                                CornerRadius="12"
+                                SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -305,13 +310,34 @@
             <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}" />
             <Setter Property="Background" Value="#E2E8F0" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid x:Name="TemplateRoot">
                             <Border Background="{TemplateBinding Background}" CornerRadius="3" />
-                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" Background="{TemplateBinding Foreground}" CornerRadius="3" />
+                            <Grid Margin="0" x:Name="PART_Track">
+                                <Rectangle x:Name="PART_Indicator" 
+                                           HorizontalAlignment="Left" 
+                                           Fill="{TemplateBinding Foreground}" 
+                                           RadiusX="3" RadiusY="3" />
+                            </Grid>
                         </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsIndeterminate" Value="True">
+                                <Setter TargetName="PART_Indicator" Property="Width" Value="60" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <ThicknessAnimation Storyboard.TargetName="PART_Indicator"
+                                                              Storyboard.TargetProperty="Margin"
+                                                              From="-60,0,0,0" To="400,0,0,0"
+                                                              Duration="0:0:1.5" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -733,7 +759,7 @@
                                 Width="280">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconDownload}" Fill="White" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0"/>
-                                <TextBlock Text="СКАЧАТЬ И СОЗДАТЬ FIX_№.EXE" VerticalAlignment="Center"/>
+                                <TextBlock Text="СФОРМИРОВАТЬ СБОРКУ FIX (.exe)" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -806,7 +832,15 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="ПОСЛЕДНЯЯ ВЕРСИЯ OE" Foreground="{StaticResource TextMuted}" FontSize="10" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding LatestDistro.Version, FallbackValue='Не проверено'}" Foreground="{StaticResource TextDark}" FontWeight="Bold" FontSize="22" Margin="0,8,0,0"/>
+                                                                                         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                <TextBlock Text="{Binding LatestDistro.Version, FallbackValue='Не проверено'}" Foreground="{StaticResource TextDark}" FontWeight="Bold" FontSize="22"/>
+                                                <Ellipse Width="8" Height="8" Fill="#10B981" Margin="10,0,0,0" VerticalAlignment="Center" 
+                                                         Visibility="{Binding LatestDistro.IsDownloaded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect BlurRadius="10" Color="#10B981" Opacity="0.6" ShadowDepth="0"/>
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+                                             </StackPanel>
                                             <TextBlock Text="{Binding LatestDistro.FileName}" Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,4,0,0"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Command="{Binding CheckDistrosCommand}" 
@@ -827,7 +861,10 @@
                                         <TextBlock Text="Статус:" Foreground="{StaticResource TextMuted}" FontSize="12"/>
                                         <TextBlock Text="{Binding LatestDistro.DownloadStatus}" Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                         
-                                        <ProgressBar Value="{Binding LatestDistro.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
+                                        <TextBlock Text="{Binding LatestDistro.ProgressText}" HorizontalAlignment="Right" FontSize="11" Margin="0,15,0,0" Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <ProgressBar Value="{Binding LatestDistro.Progress}" Foreground="#10B981"
+                                                      IsIndeterminate="{Binding LatestDistro.IsIndeterminate}"
+                                                      Maximum="100" Height="8" Margin="0,5,0,5" 
                                                       Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                                         <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
@@ -912,7 +949,15 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="ПОСЛЕДНЯЯ ВЕРСИЯ ПРОМ" Foreground="{StaticResource TextMuted}" FontSize="10" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding LatestAisProm.Version, FallbackValue='Не проверено'}" Foreground="{StaticResource TextDark}" FontWeight="Bold" FontSize="22" Margin="0,8,0,0"/>
+                                                                                         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                <TextBlock Text="{Binding LatestAisProm.Version, FallbackValue='Не проверено'}" Foreground="{StaticResource TextDark}" FontWeight="Bold" FontSize="22"/>
+                                                <Ellipse Width="8" Height="8" Fill="#10B981" Margin="10,0,0,0" VerticalAlignment="Center" 
+                                                         Visibility="{Binding LatestAisProm.IsDownloaded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect BlurRadius="10" Color="#10B981" Opacity="0.6" ShadowDepth="0"/>
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+                                             </StackPanel>
                                             <TextBlock Text="{Binding LatestAisProm.FileName}" Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,4,0,0"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Command="{Binding CheckAisPromCommand}" 
@@ -933,7 +978,8 @@
                                         <TextBlock Text="Статус:" Foreground="{StaticResource TextMuted}" FontSize="12"/>
                                         <TextBlock Text="{Binding LatestAisProm.DownloadStatus}" Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                         
-                                        <ProgressBar Value="{Binding LatestAisProm.Progress}" Maximum="100" Height="8" Margin="0,15,0,5" 
+                                        <TextBlock Text="{Binding LatestAisProm.ProgressText}" HorizontalAlignment="Right" FontSize="11" Margin="0,15,0,0" Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <ProgressBar Value="{Binding LatestAisProm.Progress}" Foreground="#10B981" IsIndeterminate="{Binding LatestAisProm.IsIndeterminate}" Maximum="100" Height="8" Margin="0,5,0,5" 
                                                      Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         
                                         <StackPanel Orientation="Horizontal" Margin="0,15,0,0">

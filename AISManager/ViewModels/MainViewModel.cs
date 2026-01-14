@@ -779,14 +779,12 @@ namespace AISManager.ViewModels
 
                     if (processedCount > 0)
                     {
-                        // Пытаемся найти номер последнего фикса для красивого лога
-                        var lastFix = selected
-                            .Select(f => new { File = f, Info = ArchiveProcessorService.ParseArchiveName(f.FileName) })
-                            .Where(x => x.Info.HasValue)
-                            .OrderByDescending(x => x.Info!.Value.num)
-                            .FirstOrDefault();
+                        var fixNumbers = selected
+                            .Select(f => ArchiveProcessorService.ParseArchiveName(f.FileName))
+                            .Where(x => x.HasValue)
+                            .Select(x => x!.Value.num);
 
-                        string fixLabel = lastFix != null ? $"FIX_{lastFix.Info!.Value.num}.exe" : "FIX_№.exe";
+                        string fixLabel = $"FIX_{ArchiveProcessorService.GenerateFixesString(fixNumbers)}.exe";
                         AddLog($"Сформирован сборник: {fixLabel} (объединено {processedCount} фикса).");
                     }
                 }
@@ -847,13 +845,35 @@ namespace AISManager.ViewModels
             {
                 BusyMessage = $"Загрузка OE: {LatestDistro.Version}";
                 LatestDistro.IsDownloading = true;
+                LatestDistro.IsDownloaded = false;
                 LatestDistro.DownloadStatus = "ЗАГРУЗКА";
                 LatestDistro.Progress = 0;
+                LatestDistro.ProgressText = "0 МБ";
+                LatestDistro.IsIndeterminate = true; // Сначала indeterminate, пока не поймем размер
 
-                var progress = new Progress<int>(p => { if (LatestDistro != null) LatestDistro.Progress = p; });
+                var progress = new Progress<DownloadProgress>(p =>
+                {
+                    if (LatestDistro != null)
+                    {
+                        LatestDistro.Progress = p.Percentage;
+                        LatestDistro.IsIndeterminate = p.Total <= 0 && p.Percentage < 100;
+
+                        string received = (p.Received / 1024.0 / 1024.0).ToString("F1");
+                        if (p.Total > 0)
+                        {
+                            string total = (p.Total / 1024.0 / 1024.0).ToString("F1");
+                            LatestDistro.ProgressText = $"{received} / {total} МБ ({p.Percentage}%)";
+                        }
+                        else
+                        {
+                            LatestDistro.ProgressText = $"{received} МБ";
+                        }
+                    }
+                });
                 await _distroService.DownloadDistroAsync(LatestDistro, DistroDownloadPath, progress, _oeCts.Token);
 
                 LatestDistro.DownloadStatus = "ГОТОВО";
+                LatestDistro.IsDownloaded = true;
                 HasNewDistroNotification = true;
                 AddLog($"OE скачан: {LatestDistro.FileName}");
             }
@@ -893,13 +913,35 @@ namespace AISManager.ViewModels
             {
                 BusyMessage = $"Загрузка Пром: {LatestAisProm.Version}";
                 LatestAisProm.IsDownloading = true;
+                LatestAisProm.IsDownloaded = false;
                 LatestAisProm.DownloadStatus = "ЗАГРУЗКА";
                 LatestAisProm.Progress = 0;
+                LatestAisProm.ProgressText = "0 МБ";
+                LatestAisProm.IsIndeterminate = true;
 
-                var progress = new Progress<int>(p => { if (LatestAisProm != null) LatestAisProm.Progress = p; });
+                var progress = new Progress<DownloadProgress>(p =>
+                {
+                    if (LatestAisProm != null)
+                    {
+                        LatestAisProm.Progress = p.Percentage;
+                        LatestAisProm.IsIndeterminate = p.Total <= 0 && p.Percentage < 100;
+
+                        string received = (p.Received / 1024.0 / 1024.0).ToString("F1");
+                        if (p.Total > 0)
+                        {
+                            string total = (p.Total / 1024.0 / 1024.0).ToString("F1");
+                            LatestAisProm.ProgressText = $"{received} / {total} МБ ({p.Percentage}%)";
+                        }
+                        else
+                        {
+                            LatestAisProm.ProgressText = $"{received} МБ";
+                        }
+                    }
+                });
                 await _distroService.DownloadDistroAsync(LatestAisProm, AisNalog3DownloadPath, progress, _promCts.Token);
 
                 LatestAisProm.DownloadStatus = "ГОТОВО";
+                LatestAisProm.IsDownloaded = true;
                 HasNewDistroNotification = true;
                 AddLog($"АИС Налог 3 (Пром) скачан: {LatestAisProm.FileName}");
             }
