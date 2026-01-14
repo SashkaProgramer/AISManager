@@ -746,7 +746,7 @@
                             </Button.Resources>
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
-                                <TextBlock Text="Отменить загрузку" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding CancelActionText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 

@@ -35,7 +35,8 @@ namespace AISManager.Services
             try
             {
                 _logger.Debug("Checking latest distro at {Url}", ftpUrl);
-                AddUiLog($"Проверка списка версий на FTP: {ftpUrl}");
+                string target = ftpUrl.Contains("/OE/") ? "OE" : (ftpUrl.Contains("/AisNalog3_PROM/") ? "Пром" : "FTP");
+                AddUiLog($"FTP: Поиск обновлений {target}...");
                 // 1. Get version folders
                 var versions = await ListFtpDirectoryAsync(ftpUrl);
                 if (!versions.Any())
@@ -71,7 +72,7 @@ namespace AISManager.Services
                 string latestVersionFolder = latest.Raw;
                 string versionStr = latest.Version;
 
-                AddUiLog($"Найдена последняя версия: {versionStr} (папка {latestVersionFolder})");
+                AddUiLog($"FTP: Найдена версия {versionStr}");
 
                 // 2. Go to EKP folder - пробуем разные варианты регистра
                 string ekpPath = $"{ftpUrl}{latestVersionFolder}/EKP/";
@@ -126,7 +127,6 @@ namespace AISManager.Services
                 long fileSize = -1;
                 try
                 {
-                    AddUiLog($"Запрос размера файла на FTP...");
 #pragma warning disable SYSLIB0014
                     var sizeRequest = (FtpWebRequest)WebRequest.Create(distro.FullUrl);
 #pragma warning restore SYSLIB0014
@@ -134,7 +134,7 @@ namespace AISManager.Services
                     sizeRequest.Method = WebRequestMethods.Ftp.GetFileSize;
                     using var sizeResponse = (FtpWebResponse)await sizeRequest.GetResponseAsync();
                     fileSize = sizeResponse.ContentLength;
-                    if (fileSize > 0) AddUiLog($"Размер файла: {(fileSize / 1024.0 / 1024.0):F2} МБ");
+                    if (fileSize > 0) AddUiLog($"FTP: Размер файла {(fileSize / 1024.0 / 1024.0):F1} МБ");
                 }
                 catch (Exception exSize)
                 {
@@ -150,7 +150,7 @@ namespace AISManager.Services
                 request.EnableSsl = false;
                 request.KeepAlive = false;
 
-                AddUiLog($"Подключение к FTP для скачивания {distro.FileName}...");
+                AddUiLog($"FTP: Скачивание {distro.FileName}...");
                 using var response = (FtpWebResponse)await request.GetResponseAsync();
 
                 // Use fileSize from GetFileSize if ContentLength is not available

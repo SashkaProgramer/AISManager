@@ -94,6 +94,13 @@ namespace AISManager.ViewModels
             set => SetProperty(ref _busyMessage, value);
         }
 
+        private string _cancelActionText = "Отменить загрузку";
+        public string CancelActionText
+        {
+            get => _cancelActionText;
+            set => SetProperty(ref _cancelActionText, value);
+        }
+
         public string AutoCheckStatusText
         {
             get => _autoCheckStatusText;
@@ -552,6 +559,7 @@ namespace AISManager.ViewModels
         {
             if (IsBusy) return;
             IsBusy = true;
+            CancelActionText = "Отменить проверку";
 
             try
             {
@@ -560,6 +568,7 @@ namespace AISManager.ViewModels
 
                 // Проверка AIS и Hotfixes (только получение списка)
                 CurrentVersion = await _versionService.GetCurrentAISVersionAsync();
+                AddLog($"Версия АИС: {CurrentVersion}");
                 var hotfixes = await _hotfixService.GetHotfixesAsync(CurrentVersion);
 
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -622,6 +631,16 @@ namespace AISManager.ViewModels
                                 existing.ProgressValue = 0;
                             }
                         }
+                    }
+
+                    int newCount = Updates.Count(u => u.StatusText == "НОВОЕ");
+                    if (hotfixes.Count > 0)
+                    {
+                        AddLog($"Найдено фиксов: {hotfixes.Count} (новых: {newCount})");
+                    }
+                    else
+                    {
+                        AddLog("Для текущей версии фиксов не найдено.");
                     }
                 });
 
@@ -716,6 +735,7 @@ namespace AISManager.ViewModels
             }
 
             if (!internalCall) IsBusy = true;
+            CancelActionText = "Отменить загрузку";
             _fixesCts = new System.Threading.CancellationTokenSource();
             try
             {
@@ -809,6 +829,7 @@ namespace AISManager.ViewModels
         {
             if (IsBusy) return;
             IsBusy = true;
+            CancelActionText = "Отменить поиск";
             try
             {
                 BusyMessage = "Проверка дистрибутивов OE...";
@@ -821,6 +842,7 @@ namespace AISManager.ViewModels
         {
             if (IsBusy) return;
             IsBusy = true;
+            CancelActionText = "Отменить поиск";
             try
             {
                 BusyMessage = "Проверка дистрибутивов Пром...";
@@ -840,6 +862,7 @@ namespace AISManager.ViewModels
             }
 
             if (!internalCall) IsBusy = true;
+            CancelActionText = "Отменить загрузку";
             _oeCts = new System.Threading.CancellationTokenSource();
             try
             {
@@ -908,6 +931,7 @@ namespace AISManager.ViewModels
             }
 
             if (!internalCall) IsBusy = true;
+            CancelActionText = "Отменить загрузку";
             _promCts = new System.Threading.CancellationTokenSource();
             try
             {
@@ -994,7 +1018,7 @@ namespace AISManager.ViewModels
                             // Skip files that are in use (like the current log file)
                         }
                     }
-                    AddLog("Логи на диске очищены (кроме используемых файлов).");
+                    AddLog("Логи очищены.");
                 }
                 else
                 {
