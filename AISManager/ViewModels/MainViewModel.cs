@@ -352,7 +352,7 @@ namespace AISManager.ViewModels
             _logger = Log.ForContext<MainViewModel>();
 
             CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync());
-            DownloadCommand = new RelayCommand(async _ => await DownloadSelectedAsync(), _ => !IsBusy);
+            DownloadCommand = new RelayCommand(async _ => await DownloadSelectedAsync(forceSfx: true), _ => !IsBusy);
             ManualDownloadCommand = new RelayCommand(_ => System.Windows.MessageBox.Show("Функция ручного скачивания пока не реализована."));
             CancelDownloadFixesCommand = new RelayCommand(_ => _fixesCts?.Cancel(), _ => _fixesCts != null);
 
@@ -701,7 +701,7 @@ namespace AISManager.ViewModels
             await CheckAllAsync(); // Перенаправляем на общий метод для консистентности
         }
 
-        private async Task DownloadSelectedAsync(bool internalCall = false)
+        private async Task DownloadSelectedAsync(bool internalCall = false, bool forceSfx = false)
         {
             var selected = Updates.Where(u => u.IsSelected).ToList();
             if (!selected.Any())
@@ -771,7 +771,7 @@ namespace AISManager.ViewModels
                     }
                 }
 
-                if (_config.AutoSfx)
+                if (_config.AutoSfx || forceSfx)
                 {
                     BusyMessage = "Создание SFX...";
                     // Передаем список выбранных имен файлов, чтобы в SFX попали только они
@@ -780,13 +780,13 @@ namespace AISManager.ViewModels
                     if (processedCount > 0)
                     {
                         // Пытаемся найти номер последнего фикса для красивого лога
-                        var lastFix = selected.OrderByDescending(f =>
-                        {
-                            var match = System.Text.RegularExpressions.Regex.Match(f.FileName, @"\d+");
-                            return match.Success ? int.Parse(match.Value) : 0;
-                        }).FirstOrDefault();
+                        var lastFix = selected
+                            .Select(f => new { File = f, Info = ArchiveProcessorService.ParseArchiveName(f.FileName) })
+                            .Where(x => x.Info.HasValue)
+                            .OrderByDescending(x => x.Info.Value.num)
+                            .FirstOrDefault();
 
-                        string fixLabel = lastFix != null ? $"FIX_{System.Text.RegularExpressions.Regex.Match(lastFix.FileName, @"\d+").Value}.exe" : "FIX_№.exe";
+                        string fixLabel = lastFix != null ? $"FIX_{lastFix.Info.Value.num}.exe" : "FIX_№.exe";
                         AddLog($"Сформирован сборник: {fixLabel} (объединено {processedCount} фикса).");
                     }
                 }
