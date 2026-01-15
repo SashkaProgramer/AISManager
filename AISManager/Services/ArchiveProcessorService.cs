@@ -167,8 +167,16 @@ namespace AISManager.Services
                 {
                     foreach (var archive in sortedList)
                     {
-                        if (archive.Extension == ".zip") UnzipFile(archive.OriginalFilePath, stagingPath);
-                        else if (archive.Extension == ".rar") UnrarFile(archive.OriginalFilePath, stagingPath);
+                        if (archive.Extension == ".zip")
+                        {
+                            s_logger.Information("Распаковка ZIP: {FileName}", archive.OriginalFilePath);
+                            UnzipFile(archive.OriginalFilePath, stagingPath);
+                        }
+                        else if (archive.Extension == ".rar")
+                        {
+                            s_logger.Information("Распаковка RAR: {FileName}", archive.OriginalFilePath);
+                            UnrarFile(archive.OriginalFilePath, stagingPath);
+                        }
                     }
 
                     var fixNumbers = sortedList.Select(x => x.FixNumber).Distinct();
@@ -184,7 +192,7 @@ namespace AISManager.Services
                 }
                 catch (Exception ex)
                 {
-                    s_logger.Error(ex, "Ошибка при обработке архивов");
+                    s_logger.Error(ex, "Критическая ошибка при распаковке архивов или сборке SFX");
                     OnLog?.Invoke("Ошибка при обработке архивов: " + ex.Message);
                     return 0;
                 }

@@ -89,16 +89,16 @@
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#2D3A4F" Duration="0:0:0.2"/>
-                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="#FFFFFF" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="Background.Color" To="#2D3A4F" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="#FFFFFF" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
                                 <Trigger.ExitActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
-                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="Background.Color" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetProperty="Foreground.Color" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
@@ -159,39 +159,18 @@
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#2563EB" Duration="0:0:0.2"/>
-                                            <!-- Assuming 'groupShadow' is meant to be 'Effect' on the border or a child element -->
-                                            <!-- If 'groupShadow' refers to the existing 'ButtonShadow' effect, it needs to be named -->
-                                            <!-- For now, applying to the border's effect if it's a DropShadowEffect -->
-                                            <!-- If the effect is directly on the button, it cannot be targeted by Storyboard.TargetName="groupShadow" -->
-                                            <!-- The instruction implies 'groupShadow' and 'groupBorder' are elements within the template. -->
-                                            <!-- Since they are not defined, I will assume the user wants to animate the existing border's background and the button's effect. -->
-                                            <!-- However, the instruction specifically mentions 'groupBorder' and 'groupShadow' as if they exist. -->
-                                            <!-- Given the instruction "Fix the broken structure from the previous step", and the provided snippet, -->
-                                            <!-- I will interpret 'groupBorder' as 'border' and 'groupShadow' as the effect on the button itself. -->
-                                            <!-- But animating an effect directly on the button from within its ControlTemplate is not straightforward. -->
-                                            <!-- The provided snippet seems to be for a different context where these elements are named. -->
-                                            <!-- To make it syntactically correct and follow the instruction as closely as possible, -->
-                                            <!-- I will assume 'groupBorder' refers to the 'border' element and 'groupShadow' is a named DropShadowEffect. -->
-                                            <!-- Since there's no named DropShadowEffect in this template, I'll add one to the border. -->
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="#3B82F6" Duration="0:0:0.2"/>
-                                            <!-- The following shadow animations require a named DropShadowEffect within the template. -->
-                                            <!-- As per the instruction, I'll add a named effect to the border for these animations. -->
-                                            <!-- This might be a misinterpretation if 'groupShadow' was meant to be the button's Effect property. -->
-                                            <!-- But the instruction explicitly uses Storyboard.TargetName="groupShadow". -->
-                                            <!-- I will add a DropShadowEffect named 'groupShadow' to the border. -->
-                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="Opacity" To="0.25" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="BlurRadius" To="35" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                            Storyboard.TargetProperty="Background.Color" 
+                                                            To="#2563EB" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
                                 <Trigger.ExitActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="Opacity" Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="groupShadow" Storyboard.TargetProperty="BlurRadius" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="border" 
+                                                            Storyboard.TargetProperty="Background.Color" 
+                                                            Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
@@ -279,14 +258,14 @@
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="#3B82F6" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="BorderBrush.Color" To="#3B82F6" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
                                 <Trigger.ExitActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="BorderBrush.Color" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>

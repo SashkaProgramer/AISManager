@@ -28,23 +28,23 @@ namespace AISManager.Services
             string searchTerm = $"{HotfixPrefix}{version}";
             string searchUrl = $"{HotfixSearchBaseURL}?kb=fns&term={Uri.EscapeDataString(searchTerm)}&from=&to=";
 
-            s_logger.Information("[GetHotfixesAsync] Запрос списка хотфиксов для версии {Version} по URL: {SearchUrl}", version, searchUrl);
+            s_logger.Information("Запрос списка хотфиксов для версии {Version}. URL: {SearchUrl}", version, searchUrl);
 
             try
             {
                 var responseHtml = await _httpClient.GetStringAsync(searchUrl);
-                s_logger.Debug("[GetHotfixesAsync] HTML-ответ получен, длина: {Length}", responseHtml.Length);
+                s_logger.Debug("HTML-ответ получен, длина: {Length} символов", responseHtml.Length);
 
                 var regexPattern = @"/upload[^""'\s]+\.(zip|rar)";
                 var matches = Regex.Matches(responseHtml, regexPattern, RegexOptions.IgnoreCase);
 
                 if (matches.Count > 0)
                 {
-                    s_logger.Information("[GetHotfixesAsync] Найдено {Count} потенциальных ссылок на хотфиксы на странице (до удаления дубликатов).", matches.Count);
+                    s_logger.Information("Найдено {Count} потенциальных ссылок на хотфиксы (до фильтрации)", matches.Count);
                     foreach (Match match in matches)
                     {
                         var relativeUrlFromHtml = match.Value;
-                        s_logger.Debug("[GetHotfixesAsync] Regex Match.Value: '{MatchValue}'", relativeUrlFromHtml);
+                        s_logger.Debug("Найдено совпадение: '{MatchValue}'", relativeUrlFromHtml);
 
                         string unescapedForUnicodeSequencesUrl;
                         try
@@ -57,7 +57,7 @@ namespace AISManager.Services
                         }
                         catch (Exception ex_unescape)
                         {
-                            s_logger.Warning(ex_unescape, "[GetHotfixesAsync] Ошибка при Regex.Replace для \\uXXXX в '{OriginalUrl}'. Используем как есть.", relativeUrlFromHtml);
+                            s_logger.Warning(ex_unescape, "Ошибка при обработке Unicode-последовательностей в URL: '{OriginalUrl}'", relativeUrlFromHtml);
                             unescapedForUnicodeSequencesUrl = relativeUrlFromHtml;
                         }
 
@@ -75,19 +75,19 @@ namespace AISManager.Services
                     var uniqueHotfixes = hotfixesTemp.GroupBy(h => h.Url)
                                                .Select(g => g.First())
                                                .ToList();
-                    s_logger.Information("[GetHotfixesAsync] После удаления дубликатов по URL найдено {Count} уникальных хотфиксов.", uniqueHotfixes.Count);
+                    s_logger.Information("После удаления дубликатов найдено {Count} уникальных хотфиксов", uniqueHotfixes.Count);
 
                     return uniqueHotfixes;
                 }
                 else
                 {
-                    s_logger.Warning("[GetHotfixesAsync] Хотфиксы для версии {Version} не найдены.", version);
+                    s_logger.Warning("Хотфиксы для версии {Version} не найдены на странице поддержки", version);
                     return new List<HotfixInfo>();
                 }
             }
             catch (Exception ex)
             {
-                s_logger.Error(ex, "[GetHotfixesAsync] Ошибка при получении списка обновлений для версии {Version}", version);
+                s_logger.Error(ex, "Ошибка при получении списка обновлений для версии {Version}", version);
                 throw;
             }
         }
@@ -121,7 +121,7 @@ namespace AISManager.Services
                 };
                 string finalUrlToRequest = uriBuilder.Uri.AbsoluteUri;
 
-                s_logger.Information("[DownloadHotfixAsync] Начало скачивания хотфикса {HotfixName} по URL: {FinalUrl}", hotfix.Name, finalUrlToRequest);
+                s_logger.Information("Начало скачивания хотфикса {HotfixName}. URL: {FinalUrl}", hotfix.Name, finalUrlToRequest);
 
                 var response = await _httpClient.GetAsync(finalUrlToRequest, HttpCompletionOption.ResponseHeadersRead, ct);
                 response.EnsureSuccessStatusCode();
@@ -153,11 +153,11 @@ namespace AISManager.Services
                 hotfix.LocalPath = filePath;
                 hotfix.DownloadDate = DateTime.Now;
                 hotfix.FileSize = new FileInfo(filePath).Length;
-                s_logger.Information("[DownloadHotfixAsync] Хотфикс {HotfixName} успешно скачан.", hotfix.Name);
+                s_logger.Information("Хотфикс {HotfixName} успешно скачан", hotfix.Name);
             }
             catch (Exception ex)
             {
-                s_logger.Error(ex, "[DownloadHotfixAsync] Ошибка при загрузке обновления {HotfixName}", hotfix.Name);
+                s_logger.Error(ex, "Ошибка при загрузке хотфикса {HotfixName}", hotfix.Name);
                 throw;
             }
         }
@@ -189,7 +189,7 @@ namespace AISManager.Services
             }
             catch (Exception ex)
             {
-                s_logger.Error(ex, "[ValidateHotfixAsync] Ошибка валидации");
+                s_logger.Error(ex, "Ошибка при валидации хотфикса {HotfixName}", hotfix.Name);
                 return false;
             }
         }

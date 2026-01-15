@@ -55,23 +55,22 @@ namespace AISManager.Services
                 }
                 else
                 {
-                    s_logger.Warning("Файл run.cmd не найден в инструментах.");
+                    s_logger.Warning("Файл сценария run.cmd не найден в ресурсах сборки");
                 }
 
-                s_logger.Information("Упаковка файлов в 7z...");
+                s_logger.Information("Запуск упаковки файлов в 7z-архив...");
                 Run7z($"a \"{tempArchive7z}\" \"{contentSourceDir}\\*\"");
 
                 // CreateSfxExe(outputExePath, tempArchive7z);
                 CreateSfxExe(outputExePath, tempArchive7z);
 
-                // LogInfo("SFX архив успешно создан: {0}", outputExePath);
-                s_logger.Information("SFX архив успешно создан: {0}", outputExePath);
+                s_logger.Information("SFX архив успешно создан: {OutputPath}", outputExePath);
 
                 if (File.Exists(runCmdDest)) File.Delete(runCmdDest);
             }
             catch (Exception ex)
             {
-                s_logger.Error(ex, "Ошибка при сборке SFX");
+                s_logger.Error(ex, "Критическая ошибка при формировании SFX-пакета");
                 throw;
             }
             finally

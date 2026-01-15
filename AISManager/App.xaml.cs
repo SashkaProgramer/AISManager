@@ -19,10 +19,14 @@ namespace AISManager
                 System.IO.Directory.CreateDirectory(logDir);
             }
 
+            var outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}";
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
-                .WriteTo.Debug()
+                .WriteTo.File(logPath,
+                    rollingInterval: RollingInterval.Day,
+                    outputTemplate: outputTemplate)
+                .WriteTo.Debug(outputTemplate: outputTemplate)
                 .CreateLogger();
 
             Log.Information("--- Application Initialize ---");

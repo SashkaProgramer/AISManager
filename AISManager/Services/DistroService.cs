@@ -34,13 +34,13 @@ namespace AISManager.Services
         {
             try
             {
-                _logger.Debug("Checking latest distro at {Url}", ftpUrl);
+                _logger.Debug("Проверка наличия дистрибутивов по адресу: {Url}", ftpUrl);
                 string target = ftpUrl.Contains("/OE/") ? "OE" : (ftpUrl.Contains("/AisNalog3_PROM/") ? "Пром" : "FTP");
                 // 1. Get version folders
                 var versions = await ListFtpDirectoryAsync(ftpUrl);
                 if (!versions.Any())
                 {
-                    _logger.Warning("ListFtpDirectoryAsync returned empty list for {Url}", ftpUrl);
+                    _logger.Warning("Сервер FTP вернул пустой список файлов для пути: {Url}", ftpUrl);
                     return null;
                 }
 
@@ -63,7 +63,7 @@ namespace AISManager.Services
 
                 if (!versionEntries.Any())
                 {
-                    _logger.Warning("No version folders found in {Url}", ftpUrl);
+                    _logger.Warning("На сервере FTP не найдено папок с версиями по адресу: {Url}", ftpUrl);
                     return null;
                 }
 
@@ -84,7 +84,7 @@ namespace AISManager.Services
 
                 if (!files.Any())
                 {
-                    _logger.Warning("EKP folder is empty: {Url}", ekpPath);
+                    _logger.Warning("Папка EKP пуста или отсутствует по адресу: {Url}", ekpPath);
                     return null;
                 }
 
@@ -93,7 +93,7 @@ namespace AISManager.Services
 
                 if (string.IsNullOrEmpty(rarFile))
                 {
-                    _logger.Warning("No .rar file found in {Url}", ekpPath);
+                    _logger.Warning("В папке {Url} не найдено файлов дистрибутива (.rar)", ekpPath);
                     return null;
                 }
 
@@ -106,7 +106,7 @@ namespace AISManager.Services
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error getting latest distro from FTP: {Url}", ftpUrl);
+                _logger.Error(ex, "Ошибка при получении дистрибутива с FTP: {Url}", ftpUrl);
                 return null;
             }
         }
@@ -118,7 +118,7 @@ namespace AISManager.Services
                 if (!Directory.Exists(localPath)) Directory.CreateDirectory(localPath);
                 string fullFilePath = Path.Combine(localPath, distro.FileName);
 
-                _logger.Information("Starting download of {FileName} to {LocalPath}", distro.FileName, fullFilePath);
+                _logger.Information("Запуск скачивания {FileName} в {LocalPath}", distro.FileName, fullFilePath);
 
                 // Get file size first to ensure we can track progress (some FTP servers return -1 for ContentLength on download request)
                 long fileSize = -1;
@@ -135,7 +135,7 @@ namespace AISManager.Services
                 }
                 catch (Exception exSize)
                 {
-                    _logger.Warning(exSize, "Could not get file size for FTP progress tracking.");
+                    _logger.Warning(exSize, "Не удалось определить размер файла на FTP для отслеживания прогресса");
                 }
 
 #pragma warning disable SYSLIB0014
@@ -176,16 +176,16 @@ namespace AISManager.Services
                 }
 
                 progress?.Report(new DownloadProgress { Received = totalBytesRead, Total = fileSize, Percentage = 100 });
-                _logger.Information("Download completed: {FileName}", distro.FileName);
+                _logger.Information("Скачивание завершено успешно: {FileName}", distro.FileName);
             }
             catch (OperationCanceledException)
             {
-                _logger.Warning("Download cancelled for {FileName}", distro.FileName);
+                _logger.Warning("Скачивание файла {FileName} было отменено пользователем", distro.FileName);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error downloading distro from FTP");
+                _logger.Error(ex, "Критическая ошибка при скачивании дистрибутива с FTP");
                 throw;
             }
         }
@@ -223,7 +223,7 @@ namespace AISManager.Services
             }
             catch (Exception ex)
             {
-                _logger.Warning("Could not list FTP directory {Url}: {Message}", url, ex.Message);
+                _logger.Warning("Не удалось прочитать содержимое директории FTP {Url}. Сообщение: {Message}", url, ex.Message);
                 AddUiLog($"Ошибка FTP при чтении {url}: {ex.Message}");
             }
             return results;

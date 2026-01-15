@@ -373,6 +373,7 @@ namespace AISManager.ViewModels
             _archiveProcessorService.OnLog = msg => System.Windows.Application.Current.Dispatcher.Invoke(() => AddLog(msg));
 
             _logger = Log.ForContext<MainViewModel>();
+            _logger.Information("Приложение инициализировано. Запущена работа с конфигурацией и сервисами.");
 
             CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync());
             DownloadCommand = new RelayCommand(async _ => await DownloadSelectedAsync(forceSfx: true), _ => !IsBusy);
@@ -851,6 +852,7 @@ namespace AISManager.ViewModels
 
                 if (_config.AutoSfx || forceSfx)
                 {
+                    _logger.Information("Запуск автоматической сборки SFX для выбранных фиксов...");
                     BusyMessage = "Создание SFX...";
                     // Передаем список выбранных имен файлов, чтобы в SFX попали только они
                     int processedCount = await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config, selected.Select(s => s.FileName));
