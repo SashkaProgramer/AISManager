@@ -36,7 +36,6 @@ namespace AISManager.Services
             {
                 _logger.Debug("Checking latest distro at {Url}", ftpUrl);
                 string target = ftpUrl.Contains("/OE/") ? "OE" : (ftpUrl.Contains("/AisNalog3_PROM/") ? "Пром" : "FTP");
-                AddUiLog($"FTP: Поиск обновлений {target}...");
                 // 1. Get version folders
                 var versions = await ListFtpDirectoryAsync(ftpUrl);
                 if (!versions.Any())
@@ -71,8 +70,6 @@ namespace AISManager.Services
                 var latest = versionEntries.First();
                 string latestVersionFolder = latest.Raw;
                 string versionStr = latest.Version;
-
-                AddUiLog($"FTP: Найдена версия {versionStr}");
 
                 // 2. Go to EKP folder - пробуем разные варианты регистра
                 string ekpPath = $"{ftpUrl}{latestVersionFolder}/EKP/";

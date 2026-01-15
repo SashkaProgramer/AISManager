@@ -37,6 +37,11 @@ namespace AISManager.ViewModels
         private const string DistroOeUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/OE/";
         private const string DistroPromUrl = "ftp://fap.regions.tax.nalog.ru/AisNalog3/AisNalog3_PROM/";
 
+        private string? _lastAisVersion;
+        private string? _lastOeVersion;
+        private string? _lastPromVersion;
+        private int? _lastHotfixesCount;
+
         private DistroInfo? _latestDistro;
         public DistroInfo? LatestDistro
         {
@@ -554,7 +559,7 @@ namespace AISManager.ViewModels
             {
                 if (!IsBusy)
                 {
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await CheckAllAsync());
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await CheckAllAsync(true));
                 }
             }, null, TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes), TimeSpan.FromMinutes(_config.AutoCheckIntervalMinutes));
         }
@@ -566,7 +571,7 @@ namespace AISManager.ViewModels
             AddLog("Автопроверка обновлений выключена.");
         }
 
-        private async Task CheckAllAsync()
+        private async Task CheckAllAsync(bool isSilent = false)
         {
             if (IsBusy) return;
             IsBusy = true;
@@ -574,12 +579,23 @@ namespace AISManager.ViewModels
 
             try
             {
-                // 1. Сначала только проверяем наличие версий (это быстро)
-                BusyMessage = "Проверка версий...";
+                if (!isSilent) AddLog("Запуск полной проверки...");
 
-                // Проверка AIS и Hotfixes (только получение списка)
-                CurrentVersion = await _versionService.GetCurrentAISVersionAsync();
-                AddLog($"Версия АИС: {CurrentVersion}");
+                // 1. Пакеты исправлений
+                BusyMessage = "Проверка версий АИС и Hotfixes...";
+
+                string newAisVersion = await _versionService.GetCurrentAISVersionAsync();
+                if (!isSilent || newAisVersion != _lastAisVersion)
+                {
+                    CurrentVersion = newAisVersion;
+                    AddLog($"Версия АИС: {CurrentVersion}");
+                    _lastAisVersion = newAisVersion;
+                }
+                else
+                {
+                    CurrentVersion = newAisVersion;
+                }
+
                 var hotfixes = await _hotfixService.GetHotfixesAsync(CurrentVersion);
 
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -645,23 +661,53 @@ namespace AISManager.ViewModels
                     }
 
                     int newCount = Updates.Count(u => u.StatusText == "НОВОЕ");
-                    if (hotfixes.Count > 0)
+                    if (!isSilent || hotfixes.Count != _lastHotfixesCount)
                     {
-                        AddLog($"Найдено фиксов: {hotfixes.Count} (новых: {newCount})");
-                    }
-                    else
-                    {
-                        AddLog("Для текущей версии фиксов не найдено.");
+                        if (hotfixes.Count > 0)
+                        {
+                            AddLog($"Пакеты исправлений: всего {hotfixes.Count} (новых: {newCount})");
+                        }
+                        else
+                        {
+                            AddLog("Для текущей версии фиксов не найдено.");
+                        }
+                        _lastHotfixesCount = hotfixes.Count;
                     }
                 });
 
-                // Проверка OE по FTP
-                BusyMessage = "Проверка дистрибутивов OE...";
-                LatestDistro = await _distroService.GetLatestDistroAsync(DistroOeUrl);
+                // 2. OE
+                BusyMessage = "Связь с FTP: Проверка OE...";
+                var oeInfo = await _distroService.GetLatestDistroAsync(DistroOeUrl);
+                if (oeInfo != null)
+                {
+                    if (!isSilent || oeInfo.Version != _lastOeVersion)
+                    {
+                        string prefix = (_lastOeVersion != null && oeInfo.Version != _lastOeVersion) ? "✨ НАЙДЕНА НОВАЯ ВЕРСИЯ! " : "";
+                        AddLog($"{prefix}FTP OE: {oeInfo.Version}");
+                        _lastOeVersion = oeInfo.Version;
+                    }
+                    LatestDistro = oeInfo;
+                }
 
-                // Проверка Пром по FTP
-                BusyMessage = "Проверка дистрибутивов Пром...";
-                LatestAisProm = await _distroService.GetLatestDistroAsync(DistroPromUrl);
+                // 3. Пром
+                BusyMessage = "Связь с FTP: Проверка Пром...";
+                var promInfo = await _distroService.GetLatestDistroAsync(DistroPromUrl);
+                if (promInfo != null)
+                {
+                    if (!isSilent || promInfo.Version != _lastPromVersion)
+                    {
+                        string prefix = (_lastPromVersion != null && promInfo.Version != _lastPromVersion) ? "✨ НАЙДЕНА НОВАЯ ВЕРСИЯ! " : "";
+                        AddLog($"{prefix}FTP Пром: {promInfo.Version}");
+                        _lastPromVersion = promInfo.Version;
+                    }
+                    LatestAisProm = promInfo;
+                }
+
+                // Если ручной запуск и ничего не изменилось - добавим маленькое подтверждение
+                if (!isSilent && _lastOeVersion == oeInfo?.Version && _lastPromVersion == promInfo?.Version)
+                {
+                    // Можно было бы что-то добавить, но лучше не мусорить
+                }
 
                 // 2. А теперь запускаем закачки, если включена автозагрузка
                 // Фиксы
@@ -845,8 +891,14 @@ namespace AISManager.ViewModels
             CancelActionText = "Отменить поиск";
             try
             {
-                BusyMessage = "Проверка дистрибутивов OE...";
-                LatestDistro = await _distroService.GetLatestDistroAsync(DistroOeUrl);
+                BusyMessage = "Связь с FTP: Проверка OE...";
+                var info = await _distroService.GetLatestDistroAsync(DistroOeUrl);
+                if (info != null)
+                {
+                    AddLog($"Результат проверки OE: {info.Version}");
+                    _lastOeVersion = info.Version;
+                    LatestDistro = info;
+                }
             }
             finally { IsBusy = false; }
         }
@@ -858,8 +910,14 @@ namespace AISManager.ViewModels
             CancelActionText = "Отменить поиск";
             try
             {
-                BusyMessage = "Проверка дистрибутивов Пром...";
-                LatestAisProm = await _distroService.GetLatestDistroAsync(DistroPromUrl);
+                BusyMessage = "Связь с FTP: Проверка Пром...";
+                var info = await _distroService.GetLatestDistroAsync(DistroPromUrl);
+                if (info != null)
+                {
+                    AddLog($"Результат проверки Пром: {info.Version}");
+                    _lastPromVersion = info.Version;
+                    LatestAisProm = info;
+                }
             }
             finally { IsBusy = false; }
         }
