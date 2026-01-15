@@ -65,8 +65,8 @@
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Padding" Value="16,12" />
-            <Setter Property="Margin" Value="12,4" />
+            <Setter Property="Padding" Value="14,12" />
+            <Setter Property="Margin" Value="10,4" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -122,7 +122,7 @@
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <Grid>
-                                <Border HorizontalAlignment="Left" Width="4" Height="20" Background="White" CornerRadius="2" Margin="-16,0,0,0"/>
+                                <Border HorizontalAlignment="Left" Width="4" Height="20" Background="White" CornerRadius="2" Margin="-12,0,0,0"/>
                                 <ContentPresenter VerticalAlignment="Center" />
                             </Grid>
                         </Border>
@@ -345,7 +345,7 @@
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="240" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <!-- САЙДБАР -->
@@ -358,7 +358,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 
-                <StackPanel Grid.Row="0" Margin="25,45,20,35">
+                <StackPanel Grid.Row="0" Margin="25,45,10,35">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -371,7 +371,7 @@
                             </Border.Effect>
                         </Border>
                         <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="AIS MANAGER" Foreground="White" FontWeight="Black" FontSize="16" />
+                            <TextBlock Text="DASHBOARD" Foreground="White" FontWeight="Black" FontSize="15" />
                             <TextBlock Text="Automated Update" Foreground="{StaticResource SidebarText}" FontSize="10" FontWeight="Medium" Margin="0,2,0,0"/>
                             <Border Background="#EF4444" 
                                     HorizontalAlignment="Left" 
@@ -399,7 +399,7 @@
                         <StackPanel Orientation="Horizontal">
                             <Path Data="{StaticResource IconBox}" 
                                   Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
-                                  Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                  Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"/>
                             <TextBlock Text="Пакеты исправлений" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
@@ -411,7 +411,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconDisc}" 
                                       Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
-                                      Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                      Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"/>
                                 <TextBlock Text="Дистрибутивы ПО" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -436,7 +436,7 @@
                         <StackPanel Orientation="Horizontal">
                             <Path Data="{StaticResource IconSettings}" 
                                   Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
-                                  Width="18" Height="18" Stretch="Uniform" Margin="0,0,12,0"/>
+                                  Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"/>
                             <TextBlock Text="Настройки" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
