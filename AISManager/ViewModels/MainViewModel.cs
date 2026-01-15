@@ -20,7 +20,7 @@ namespace AISManager.ViewModels
         private readonly ArchiveProcessorService _archiveProcessorService;
         private readonly ILogger _logger;
         private readonly AppConfig _config;
-
+        //     
         private string _currentVersion = "Загрузка...";
         private string _logOutput = "";
         private bool _isBusy;
