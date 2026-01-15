@@ -8,6 +8,7 @@
         xmlns:infra="clr-namespace:AISManager.Infrastructure"
         mc:Ignorable="d"
         Title="AIS Update Manager"
+        Icon="app_icon.ico"
         Height="700"
         Width="950"
         MinWidth="950"
