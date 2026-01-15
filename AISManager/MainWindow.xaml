@@ -52,6 +52,7 @@
         <Geometry x:Key="IconLogs">M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3M7,7H17V5H19V19H5V5H7V7M12,11L11,15L15,8L12,5L8,12L12,11.5L13,11Z</Geometry>
         <Geometry x:Key="IconDownload">M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z</Geometry>
         <Geometry x:Key="IconClose">M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z</Geometry>
+        <Geometry x:Key="IconInfo">M11,9H13V7H11V9M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z</Geometry>
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <infra:InverseBooleanToVisibilityConverter x:Key="InvBoolToVis" />
@@ -442,6 +443,17 @@
                                   Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
                                   Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"/>
                             <TextBlock Text="Настройки" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="BtnAbout"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Click="MenuButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{StaticResource IconInfo}" 
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                  Width="18" Height="18" Stretch="Uniform" Margin="0,0,10,0"/>
+                            <TextBlock Text="О программе" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -888,6 +900,7 @@
                     
                     <TextBlock Grid.Row="2" Text="* Дистрибутив будет скачан в папку, указанную в настройках." Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,15,0,0"/>
                 </Grid>
+
                 <!-- VIEW: SETTINGS -->
                 <Grid x:Name="ViewSettings" Visibility="Collapsed">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -1042,7 +1055,104 @@
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
+
+                <!-- VIEW: ABOUT -->
+                <Grid x:Name="ViewAbout" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,10,30">
+                            <!-- HEADER CARD -->
+                            <Border Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" CornerRadius="24" Padding="40" Margin="0,10,0,25" Effect="{StaticResource CardShadow}">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Border Width="80" Height="80" Background="{StaticResource PrimaryBlue}" CornerRadius="20" HorizontalAlignment="Center" Margin="0,0,0,20">
+                                        <Path Data="{StaticResource IconFlash}" Fill="White" Stretch="Uniform" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="30" ShadowDepth="0" Color="#3B82F6" Opacity="0.4"/>
+                                        </Border.Effect>
+                                    </Border>
+                                    
+                                    <TextBlock Text="AIS Update Manager" FontSize="28" FontWeight="Black" Foreground="{StaticResource TextDark}" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Версия 0.8.0 Release Prototype" FontSize="14" Foreground="{StaticResource TextMuted}" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                                    
+                                    <Border Background="#F1F5F9" CornerRadius="12" Padding="15,8" Margin="0,25,0,0" HorizontalAlignment="Center">
+                                        <TextBlock Text="Инструмент для автоматизации обновлений АИС Налог 3" Foreground="{StaticResource TextDark}" FontWeight="Medium"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- INFO GRID -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- LEFT COLUMN: AUTHOR -->
+                                <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" CornerRadius="20" Padding="25" Margin="0,0,12,0" Effect="{StaticResource CardShadow}">
+                                    <StackPanel>
+                                        <TextBlock Text="РАЗРАБОТКА" Foreground="{StaticResource TextMuted}" FontSize="10" FontWeight="Bold" Margin="0,0,0,15"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Width="48" Height="48" CornerRadius="24" Background="#E0E7FF">
+                                                <TextBlock Text="С" Foreground="{StaticResource PrimaryBlue}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel Margin="15,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="Саня" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                                                <TextBlock Text="Lead Developer" FontSize="12" Foreground="{StaticResource PrimaryBlue}" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <TextBlock Text="Создано специально для повышения эффективности работы с обновлениями и дистрибутивами." 
+                                                   TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource TextMuted}" Margin="0,20,0,0" LineHeight="18"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- RIGHT COLUMN: STATS/INFO -->
+                                <Border Grid.Column="1" Background="White" BorderBrush="{StaticResource BorderLight}" BorderThickness="1" CornerRadius="20" Padding="25" Margin="12,0,0,0" Effect="{StaticResource CardShadow}">
+                                    <StackPanel>
+                                        <TextBlock Text="ТЕХНОЛОГИИ" Foreground="{StaticResource TextMuted}" FontSize="10" FontWeight="Bold" Margin="0,0,0,15"/>
+                                        <UniformGrid Columns="2">
+                                            <StackPanel Margin="0,0,0,15">
+                                                <TextBlock Text=".NET 8" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDark}"/>
+                                                <TextBlock Text="Платформа" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,15">
+                                                <TextBlock Text="WPF / XAML" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDark}"/>
+                                                <TextBlock Text="Интерфейс" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                            </StackPanel>
+                                            <StackPanel>
+                                                <TextBlock Text="MVVM" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDark}"/>
+                                                <TextBlock Text="Архитектура" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                            </StackPanel>
+                                            <StackPanel>
+                                                <TextBlock Text="Modern UI" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDark}"/>
+                                                <TextBlock Text="Дизайн" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                            </StackPanel>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            
+                            <!-- FOOTER NOTE -->
+                            <StackPanel Margin="0,30,0,0" Opacity="0.5">
+                                <Separator Background="{StaticResource BorderLight}" Margin="40,0,40,20"/>
+                                <TextBlock Text="Лицензия: Использование разрешено только внутри организации ФНС." 
+                                           FontSize="11" 
+                                           Foreground="{StaticResource TextMuted}" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="© 2024 SashkaProgramer. Все права защищены." 
+                                           FontSize="10" 
+                                           Foreground="{StaticResource TextMuted}" 
+                                           HorizontalAlignment="Center" 
+                                           Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
+
             <!-- SPLITTER -->
             <GridSplitter Grid.Row="2"
                           Height="6"

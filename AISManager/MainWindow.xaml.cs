@@ -38,11 +38,13 @@ namespace AISManager
             ViewFixes.Visibility = Visibility.Collapsed;
             ViewSettings.Visibility = Visibility.Collapsed;
             ViewDistros.Visibility = Visibility.Collapsed;
+            ViewAbout.Visibility = Visibility.Collapsed;
 
             // Сбрасываем стили всех кнопок меню до обычного состояния
             BtnFixes.Style = (Style)FindResource("MenuButtonStyle");
             BtnDistros.Style = (Style)FindResource("MenuButtonStyle");
             BtnSettings.Style = (Style)FindResource("MenuButtonStyle");
+            BtnAbout.Style = (Style)FindResource("MenuButtonStyle");
 
             // Активируем нужную область и меняем стиль кнопки
             if (targetButton == BtnFixes)
@@ -65,6 +67,11 @@ namespace AISManager
                 {
                     vm.MarkDistrosAsRead();
                 }
+            }
+            else if (targetButton == BtnAbout)
+            {
+                ViewAbout.Visibility = Visibility.Visible;
+                BtnAbout.Style = (Style)FindResource("ActiveMenuButtonStyle");
             }
         }
 
