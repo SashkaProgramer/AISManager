@@ -389,7 +389,7 @@ namespace AISManager.ViewModels
             _logger = Log.ForContext<MainViewModel>();
             _logger.Information("Приложение инициализировано. Запущена работа с конфигурацией и сервисами.");
 
-            CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync());
+            CheckUpdatesCommand = new RelayCommand(async _ => await CheckUpdatesAsync(), _ => !IsBusy);
             DownloadCommand = new RelayCommand(async _ => await DownloadSelectedAsync(forceSfx: true), _ => !IsBusy);
             ManualDownloadCommand = new RelayCommand(_ => System.Windows.MessageBox.Show("Функция ручного скачивания пока не реализована."));
             CancelDownloadFixesCommand = new RelayCommand(_ => _fixesCts?.Cancel(), _ => _fixesCts != null);
@@ -401,11 +401,11 @@ namespace AISManager.ViewModels
             ClearLogsCommand = new RelayCommand(_ => ClearLogs());
             AutoSetupPathsCommand = new RelayCommand(_ => AutoSetupPaths());
 
-            CheckDistrosCommand = new RelayCommand(async _ => await CheckDistrosAsync());
+            CheckDistrosCommand = new RelayCommand(async _ => await CheckDistrosAsync(), _ => !IsBusy);
             DownloadDistroCommand = new RelayCommand(async _ => await DownloadLatestDistroAsync(), _ => !IsBusy && LatestDistro != null);
             SelectDistroDownloadPathCommand = new RelayCommand(_ => BrowseFolder("Выберите папку для загрузки дистрибутивов", path => DistroDownloadPath = path));
 
-            CheckAisPromCommand = new RelayCommand(async _ => await CheckAisPromAsync());
+            CheckAisPromCommand = new RelayCommand(async _ => await CheckAisPromAsync(), _ => !IsBusy);
             DownloadAisPromCommand = new RelayCommand(async _ => await DownloadLatestAisPromAsync(), _ => !IsBusy && LatestAisProm != null);
             CancelDownloadOeCommand = new RelayCommand(_ => _oeCts?.Cancel(), _ => _oeCts != null);
             CancelDownloadPromCommand = new RelayCommand(_ => _promCts?.Cancel(), _ => _promCts != null);

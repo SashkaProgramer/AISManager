@@ -326,24 +326,19 @@
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid x:Name="TemplateRoot">
                             <Border Background="{TemplateBinding Background}" CornerRadius="2" />
+                            
+                            <!-- Детерминированная полоска (заполнение %) -->
                             <Border x:Name="PART_Track" ClipToBounds="True" CornerRadius="2">
                                 <Rectangle x:Name="PART_Indicator" 
                                            HorizontalAlignment="Left" 
                                            Fill="{TemplateBinding Foreground}" />
                             </Border>
                             
-                            <!-- Слой для анимации ожидания -->
+                            <!-- Индетерминированная полоска (бегающая) -->
                             <Border x:Name="IndeterminateRoot" Visibility="Collapsed" ClipToBounds="True" CornerRadius="2">
-                                <Rectangle x:Name="IndeterminatePart" Width="300" HorizontalAlignment="Left" VerticalAlignment="Stretch">
-                                    <Rectangle.Fill>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#00FFFFFF" Offset="0" />
-                                            <GradientStop Color="#60FFFFFF" Offset="0.5" />
-                                            <GradientStop Color="#00FFFFFF" Offset="1" />
-                                        </LinearGradientBrush>
-                                    </Rectangle.Fill>
+                                <Rectangle x:Name="IndeterminatePart" Width="150" HorizontalAlignment="Left" Fill="{TemplateBinding Foreground}">
                                     <Rectangle.RenderTransform>
-                                        <TranslateTransform x:Name="IndeterminateTranslate" X="-300" />
+                                        <TranslateTransform x:Name="IndeterminateTranslate" X="-150" />
                                     </Rectangle.RenderTransform>
                                 </Rectangle>
                             </Border>
@@ -351,14 +346,14 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsIndeterminate" Value="True">
                                 <Setter TargetName="IndeterminateRoot" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="PART_Track" Property="Visibility" Value="Collapsed" />
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard RepeatBehavior="Forever">
                                             <DoubleAnimation Storyboard.TargetName="IndeterminateTranslate"
                                                              Storyboard.TargetProperty="X"
-                                                             From="-300" To="1400"
-                                                             Duration="0:0:1.5" />
+                                                             From="-150" To="1000"
+                                                             Duration="0:0:1.2" />
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
@@ -810,14 +805,8 @@
                                             <TextBlock Text="{Binding LatestDistro.FileName}" Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,4,0,0"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Command="{Binding CheckDistrosCommand}" 
-                                                Padding="15,8" Background="#F1F5F9" BorderThickness="0" Cursor="Hand" VerticalAlignment="Top">
-                                            <Button.Resources>
-                                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
-                                            </Button.Resources>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Path Data="{StaticResource IconRefresh}" Fill="{StaticResource TextDark}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0"/>
-                                                <TextBlock Text="Обновить" FontWeight="SemiBold" FontSize="12"/>
-                                            </StackPanel>
+                                                Width="32" Height="32" Background="Transparent" BorderThickness="0" Cursor="Hand" VerticalAlignment="Top" ToolTip="Обновить">
+                                            <Path Data="{StaticResource IconRefresh}" Fill="{StaticResource TextMuted}" Width="14" Height="14" Stretch="Uniform"/>
                                         </Button>
                                     </Grid>
                                     
@@ -833,26 +822,26 @@
                                                       Maximum="100" Height="8" Margin="0,5,0,5" 
                                                       Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-                                        <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
+                                         <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
+                                             <Button Command="{Binding DataContext.CancelDownloadOeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Height="36" Padding="15,0" Background="#FEF2F2" Foreground="#EF4444" BorderThickness="1" BorderBrush="#FEE2E2" Margin="0,0,12,0">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="6"/></Style>
+                                                </Button.Resources>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="12" Height="12" Stretch="Uniform" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="ОТМЕНИТЬ ЗАГРУЗКУ" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+
                                             <Button Style="{StaticResource PrimaryButtonStyle}" 
                                                     Command="{Binding DownloadDistroCommand}" 
                                                     Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource InvBoolToVis}}"
-                                                    Padding="20,10">
+                                                    Height="38" Width="250">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Path Data="{StaticResource IconDownload}" Fill="White" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0"/>
-                                                    <TextBlock Text="Скачать OE (.rar)" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
-                                            
-                                            <Button Command="{Binding DataContext.CancelDownloadOeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Padding="18,10" Background="#FEF2F2" Foreground="#EF4444" BorderThickness="0">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
-                                                </Button.Resources>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
-                                                    <TextBlock Text="Отменить загрузку" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <Path Data="{StaticResource IconDownload}" Fill="White" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
+                                                    <TextBlock Text="СКАЧАТЬ АРХИВ OE (.RAR)" FontSize="12" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -888,14 +877,8 @@
                                             <TextBlock Text="{Binding LatestAisProm.FileName}" Foreground="{StaticResource TextMuted}" FontSize="11" Margin="0,4,0,0"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Command="{Binding CheckAisPromCommand}" 
-                                                Padding="15,8" Background="#F1F5F9" BorderThickness="0" Cursor="Hand" VerticalAlignment="Top">
-                                            <Button.Resources>
-                                                <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
-                                            </Button.Resources>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Path Data="{StaticResource IconRefresh}" Fill="{StaticResource TextDark}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0"/>
-                                                <TextBlock Text="Обновить" FontWeight="SemiBold" FontSize="12"/>
-                                            </StackPanel>
+                                                Width="32" Height="32" Background="Transparent" BorderThickness="0" Cursor="Hand" VerticalAlignment="Top" ToolTip="Обновить">
+                                            <Path Data="{StaticResource IconRefresh}" Fill="{StaticResource TextMuted}" Width="14" Height="14" Stretch="Uniform"/>
                                         </Button>
                                     </Grid>
                                     
@@ -909,29 +892,29 @@
                                         <ProgressBar Value="{Binding LatestAisProm.Progress}" Foreground="{StaticResource PrimaryBlue}" IsIndeterminate="{Binding LatestAisProm.IsIndeterminate}" Maximum="100" Height="8" Margin="0,5,0,5" 
                                                      Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         
-                                        <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
+                                         <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
+                                             <Button Command="{Binding DataContext.CancelDownloadPromCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Height="36" Padding="15,0" Background="#FEF2F2" Foreground="#EF4444" BorderThickness="1" BorderBrush="#FEE2E2" Margin="0,0,12,0">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="6"/></Style>
+                                                </Button.Resources>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="12" Height="12" Stretch="Uniform" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="ОТМЕНИТЬ ЗАГРУЗКУ" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+
                                             <Button Style="{StaticResource PrimaryButtonStyle}" 
                                                     Command="{Binding DownloadAisPromCommand}" 
                                                     Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource InvBoolToVis}}"
-                                                    Padding="20,10">
+                                                    Height="38" Width="250">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Path Data="{StaticResource IconDownload}" Fill="White" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0"/>
-                                                    <TextBlock Text="Скачать Пром (.rar)" VerticalAlignment="Center"/>
+                                                    <Path Data="{StaticResource IconDownload}" Fill="White" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
+                                                    <TextBlock Text="СКАЧАТЬ АРХИВ ПРОМ (.RAR)" FontSize="12" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
-                                            
-                                            <Button Command="{Binding DataContext.CancelDownloadPromCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Padding="18,10" Background="#FEF2F2" Foreground="#EF4444" BorderThickness="0">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
-                                                </Button.Resources>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Path Data="{StaticResource IconClose}" Fill="#EF4444" Width="14" Height="14" Stretch="Uniform" Margin="0,0,10,0"/>
-                                                    <TextBlock Text="Отменить загрузку" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
+                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
