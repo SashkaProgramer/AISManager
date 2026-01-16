@@ -1191,7 +1191,7 @@
                             <!-- FOOTER NOTE -->
                             <StackPanel Margin="0,30,0,0" Opacity="0.5">
                                 <Separator Background="{StaticResource BorderLight}" Margin="40,0,40,20"/>
-                                <TextBlock Text="Лицензия: Использование разрешено только внутри организации ФНС." 
+                                <TextBlock Text="Лицензия: Использование разрешено только внутри организации ФКУ &quot;Налог-Сервис&quot; ФНС России." 
                                            FontSize="11" 
                                            Foreground="{StaticResource TextMuted}" 
                                            HorizontalAlignment="Center"/>
