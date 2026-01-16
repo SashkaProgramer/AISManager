@@ -590,6 +590,8 @@ namespace AISManager.ViewModels
         {
             if (IsBusy) return;
             IsBusy = true;
+            IsFixesBusy = true;
+            IsFixesIndeterminate = true;
             CancelActionText = "Отменить проверку";
 
             try
@@ -782,6 +784,8 @@ namespace AISManager.ViewModels
             }
             finally
             {
+                IsFixesBusy = false;
+                IsFixesIndeterminate = false;
                 IsBusy = false;
             }
         }
@@ -904,8 +908,12 @@ namespace AISManager.ViewModels
             }
             finally
             {
-                if (!internalCall) IsBusy = false;
-                IsFixesBusy = false;
+                if (!internalCall)
+                {
+                    IsBusy = false;
+                    IsFixesBusy = false;
+                    IsFixesIndeterminate = false;
+                }
                 _fixesCts?.Dispose();
                 _fixesCts = null;
             }
@@ -919,6 +927,8 @@ namespace AISManager.ViewModels
             try
             {
                 BusyMessage = "Связь с FTP: Проверка OE...";
+                IsFixesBusy = true;
+                IsFixesIndeterminate = true;
                 var info = await _distroService.GetLatestDistroAsync(DistroOeUrl);
                 if (info != null)
                 {
@@ -927,7 +937,12 @@ namespace AISManager.ViewModels
                     LatestDistro = info;
                 }
             }
-            finally { IsBusy = false; }
+            finally
+            {
+                IsFixesBusy = false;
+                IsFixesIndeterminate = false;
+                IsBusy = false;
+            }
         }
 
         private async Task CheckAisPromAsync()
@@ -938,6 +953,8 @@ namespace AISManager.ViewModels
             try
             {
                 BusyMessage = "Связь с FTP: Проверка Пром...";
+                IsFixesBusy = true;
+                IsFixesIndeterminate = true;
                 var info = await _distroService.GetLatestDistroAsync(DistroPromUrl);
                 if (info != null)
                 {
@@ -946,7 +963,12 @@ namespace AISManager.ViewModels
                     LatestAisProm = info;
                 }
             }
-            finally { IsBusy = false; }
+            finally
+            {
+                IsFixesBusy = false;
+                IsFixesIndeterminate = false;
+                IsBusy = false;
+            }
         }
 
         private async Task DownloadLatestDistroAsync(bool internalCall = false)
