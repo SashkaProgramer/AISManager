@@ -828,7 +828,7 @@
                                         <TextBlock Text="{Binding LatestDistro.DownloadStatus}" Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                         
                                         <TextBlock Text="{Binding LatestDistro.ProgressText}" HorizontalAlignment="Right" FontSize="11" Margin="0,15,0,0" Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        <ProgressBar Value="{Binding LatestDistro.Progress}" Foreground="#10B981"
+                                        <ProgressBar Value="{Binding LatestDistro.Progress}" Foreground="{StaticResource PrimaryBlue}"
                                                       IsIndeterminate="{Binding LatestDistro.IsIndeterminate}"
                                                       Maximum="100" Height="8" Margin="0,5,0,5" 
                                                       Visibility="{Binding LatestDistro.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
@@ -906,7 +906,7 @@
                                         <TextBlock Text="{Binding LatestAisProm.DownloadStatus}" Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="0,5,0,0"/>
                                         
                                         <TextBlock Text="{Binding LatestAisProm.ProgressText}" HorizontalAlignment="Right" FontSize="11" Margin="0,15,0,0" Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        <ProgressBar Value="{Binding LatestAisProm.Progress}" Foreground="#10B981" IsIndeterminate="{Binding LatestAisProm.IsIndeterminate}" Maximum="100" Height="8" Margin="0,5,0,5" 
+                                        <ProgressBar Value="{Binding LatestAisProm.Progress}" Foreground="{StaticResource PrimaryBlue}" IsIndeterminate="{Binding LatestAisProm.IsIndeterminate}" Maximum="100" Height="8" Margin="0,5,0,5" 
                                                      Visibility="{Binding LatestAisProm.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         
                                         <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
