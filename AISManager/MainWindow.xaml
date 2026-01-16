@@ -316,7 +316,7 @@
             </DoubleAnimation>
         </Storyboard>
         <Style TargetType="ProgressBar">
-            <Setter Property="Height" Value="6" />
+            <Setter Property="Height" Value="4" />
             <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}" />
             <Setter Property="Background" Value="#E2E8F0" />
             <Setter Property="BorderThickness" Value="0" />
@@ -325,24 +325,40 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid x:Name="TemplateRoot">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="3" />
-                            <Grid Margin="0" x:Name="PART_Track">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="2" />
+                            <Border x:Name="PART_Track" ClipToBounds="True" CornerRadius="2">
                                 <Rectangle x:Name="PART_Indicator" 
                                            HorizontalAlignment="Left" 
-                                           Fill="{TemplateBinding Foreground}" 
-                                           RadiusX="3" RadiusY="3" />
-                            </Grid>
+                                           Fill="{TemplateBinding Foreground}" />
+                            </Border>
+                            
+                            <!-- Слой для анимации ожидания -->
+                            <Border x:Name="IndeterminateRoot" Visibility="Collapsed" ClipToBounds="True" CornerRadius="2">
+                                <Rectangle x:Name="IndeterminatePart" Width="300" HorizontalAlignment="Left" VerticalAlignment="Stretch">
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#00FFFFFF" Offset="0" />
+                                            <GradientStop Color="#60FFFFFF" Offset="0.5" />
+                                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                    <Rectangle.RenderTransform>
+                                        <TranslateTransform x:Name="IndeterminateTranslate" X="-300" />
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                            </Border>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsIndeterminate" Value="True">
-                                <Setter TargetName="PART_Indicator" Property="Width" Value="60" />
+                                <Setter TargetName="IndeterminateRoot" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed" />
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard RepeatBehavior="Forever">
-                                            <ThicknessAnimation Storyboard.TargetName="PART_Indicator"
-                                                              Storyboard.TargetProperty="Margin"
-                                                              From="-60,0,0,0" To="400,0,0,0"
-                                                              Duration="0:0:1.5" />
+                                            <DoubleAnimation Storyboard.TargetName="IndeterminateTranslate"
+                                                             Storyboard.TargetProperty="X"
+                                                             From="-300" To="1400"
+                                                             Duration="0:0:1.5" />
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
