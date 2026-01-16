@@ -110,6 +110,20 @@ namespace AISManager.ViewModels
             set => SetProperty(ref _busyMessage, value);
         }
 
+        private double _totalFixesProgress;
+        public double TotalFixesProgress
+        {
+            get => _totalFixesProgress;
+            set => SetProperty(ref _totalFixesProgress, value);
+        }
+
+        private bool _isFixesIndeterminate;
+        public bool IsFixesIndeterminate
+        {
+            get => _isFixesIndeterminate;
+            set => SetProperty(ref _isFixesIndeterminate, value);
+        }
+
         private string _cancelActionText = "Отменить загрузку";
         public string CancelActionText
         {
@@ -794,6 +808,8 @@ namespace AISManager.ViewModels
 
             if (!internalCall) IsBusy = true;
             IsFixesBusy = true;
+            TotalFixesProgress = 0;
+            IsFixesIndeterminate = false;
             CancelActionText = "Отменить загрузку";
             _fixesCts = new System.Threading.CancellationTokenSource();
             try
@@ -803,15 +819,22 @@ namespace AISManager.ViewModels
                 if (!Directory.Exists(downloadPath)) Directory.CreateDirectory(downloadPath);
 
                 // AddLog($"Запуск загрузки фиксов ({selected.Count})...");
-                foreach (var file in selected)
+                for (int i = 0; i < selected.Count; i++)
                 {
+                    var file = selected[i];
                     if (file.HotfixData == null) continue;
                     file.IsProcessing = true;
                     file.StatusText = "ЗАГРУЗКА";
                     file.StatusBgColor = "#FEFCBF";
                     file.StatusFgColor = "#D69E2E";
 
-                    var progress = new Progress<int>(p => { file.ProgressValue = p; file.ProgressText = $"{p}%"; });
+                    int currentFileIndex = i;
+                    var progress = new Progress<int>(p =>
+                    {
+                        file.ProgressValue = p;
+                        file.ProgressText = $"{p}%";
+                        TotalFixesProgress = ((double)currentFileIndex + (p / 100.0)) / selected.Count * 100;
+                    });
 
                     try
                     {
@@ -820,6 +843,7 @@ namespace AISManager.ViewModels
                         {
                             file.ProgressValue = 100;
                             file.ProgressText = "100%";
+                            TotalFixesProgress = ((double)currentFileIndex + 1) / selected.Count * 100;
                             // AddLog($"Файл {file.FileName} уже существует, пропускаем загрузку.");
                         }
                         else
@@ -854,6 +878,7 @@ namespace AISManager.ViewModels
                 {
                     _logger.Information("Запуск автоматической сборки SFX для выбранных фиксов...");
                     BusyMessage = "Создание SFX...";
+                    IsFixesIndeterminate = true;
                     // Передаем список выбранных имен файлов, чтобы в SFX попали только они
                     int processedCount = await _archiveProcessorService.ProcessDownloadedHotfixesAsync(downloadPath, _config, selected.Select(s => s.FileName));
 
